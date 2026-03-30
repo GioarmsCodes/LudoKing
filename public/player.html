@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎲 Ludo King — Giocatore</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#e63946;--red-l:#ff8a94;--red-d:#b71c1c;
+  --blue:#1d6fa5;--blue-l:#4fc3f7;--blue-d:#0d47a1;
+  --green:#2a9d56;--green-l:#69d98c;--green-d:#1b5e20;
+  --yellow:#e9c46a;--yellow-l:#fff59d;--yellow-d:#f9a825;
+  --bg:#0b0a14;--surf:#16152a;--surf2:#1f1e35;--border:#2a2844;--text:#f0eeff;--dim:#7b79a0;
+  --accent:#7209b7;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background-image:radial-gradient(ellipse at 30% 20%,rgba(114,9,183,.25) 0,transparent 60%),
+                   radial-gradient(ellipse at 70% 80%,rgba(20,90,200,.18) 0,transparent 60%)}
+
+/* ── JOIN SCREEN ── */
+#joinScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:28px;padding:32px 20px;width:100%;min-height:100vh}
+#joinScreen.hidden{display:none}
+.logo{text-align:center}
+.logo h1{font-family:'Fredoka One',cursive;font-size:3.2rem;
+  background:linear-gradient(135deg,#f72585,#7209b7,#3a86ff,#06d6a0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 28px rgba(114,9,183,.5));line-height:1}
+.logo p{color:var(--dim);margin-top:8px;font-size:1rem}
+.join-card{background:var(--surf);border:1px solid var(--border);border-radius:24px;
+  padding:32px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.join-card h2{font-family:'Fredoka One',cursive;font-size:1.7rem;margin-bottom:22px;text-align:center}
+.field{margin-bottom:18px}
+.field label{display:block;font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:7px}
+.field input{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;color:var(--text);font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;
+  transition:border-color .2s}
+.field input:focus{outline:none;border-color:var(--accent)}
+.btn-join{width:100%;padding:18px;border:none;border-radius:14px;font-family:'Fredoka One',cursive;
+  font-size:1.3rem;cursor:pointer;background:linear-gradient(135deg,#7209b7,#3a86ff);color:white;
+  transition:all .2s;box-shadow:0 4px 20px rgba(114,9,183,.4)}
+.btn-join:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(114,9,183,.6)}
+.btn-join:active{transform:translateY(0)}
+.err{color:var(--red);font-size:.88rem;text-align:center;margin-top:10px;min-height:1.2em}
+
+/* ── GAME SCREEN ── */
+#gameScreen{display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  width:100%;min-height:100vh;padding:20px 16px 32px;gap:16px}
+#gameScreen.hidden{display:none}
+
+/* Color badge */
+.color-badge{display:flex;align-items:center;gap:12px;padding:10px 22px;border-radius:999px;
+  background:var(--surf);border:2px solid var(--border);transition:all .4s}
+.badge-dot{width:18px;height:18px;border-radius:50%}
+.badge-name{font-family:'Fredoka One',cursive;font-size:1.2rem}
+
+/* Turn card */
+.turn-card{width:100%;max-width:380px;padding:20px 24px;border-radius:20px;
+  background:var(--surf);border:2px solid var(--border);text-align:center;transition:all .4s}
+.turn-card.my-turn{border-color:transparent;animation:pulseCard 1.4s ease infinite alternate}
+@keyframes pulseCard{from{box-shadow:0 0 20px rgba(247,37,133,.2)}to{box-shadow:0 0 40px rgba(247,37,133,.6)}}
+.turn-card .tc-label{font-size:.82rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:6px;font-weight:700}
+.turn-card .tc-name{font-family:'Fredoka One',cursive;font-size:1.8rem}
+.turn-card .tc-sub{font-size:.88rem;color:var(--dim);margin-top:4px}
+
+/* Dice area */
+.dice-area{display:flex;flex-direction:column;align-items:center;gap:20px;flex:1;justify-content:center;width:100%;max-width:380px}
+
+.dice-big{width:110px;height:110px;border-radius:22px;background:white;
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:7px;padding:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.9);
+  transition:transform .1s}
+.dice-big.rolling{animation:bigRoll .45s ease}
+@keyframes bigRoll{0%{transform:rotate(0) scale(1)}25%{transform:rotate(18deg) scale(1.12)}50%{transform:rotate(-12deg) scale(.9)}75%{transform:rotate(8deg) scale(1.06)}100%{transform:rotate(0) scale(1)}}
+.dot{width:100%;height:100%;border-radius:50%;background:#1a1a2e;display:none}.dot.v{display:block}.dot.r{background:var(--red)}
+.dice-value{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--dim)}
+
+/* Roll button */
+.btn-roll{width:100%;max-width:320px;padding:22px;border:none;border-radius:18px;
+  font-family:'Fredoka One',cursive;font-size:1.6rem;cursor:pointer;
+  background:linear-gradient(135deg,#f72585,#7209b7);color:white;
+  box-shadow:0 6px 24px rgba(247,37,133,.5);transition:all .18s;letter-spacing:.04em;
+  position:relative;overflow:hidden}
+.btn-roll::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.12);opacity:0;transition:opacity .15s}
+.btn-roll:hover:not(:disabled)::after{opacity:1}
+.btn-roll:active:not(:disabled){transform:scale(.97)}
+.btn-roll:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+
+/* Waiting state */
+.wait-card{text-align:center;padding:28px 20px}
+.wait-card .spin{font-size:2.5rem;animation:spin 1.5s linear infinite;display:inline-block;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wait-card .wt{font-family:'Fredoka One',cursive;font-size:1.3rem;margin-bottom:6px}
+.wait-card .ws{color:var(--dim);font-size:.92rem}
+
+/* Move hint */
+.move-hint{padding:12px 20px;border-radius:14px;background:var(--surf2);border:1px solid var(--border);
+  font-size:.9rem;color:var(--dim);text-align:center;width:100%;max-width:380px}
+.move-hint strong{color:var(--text)}
+
+/* Log */
+.mini-log{width:100%;max-width:380px;overflow:hidden}
+.mini-log-item{font-size:.8rem;color:var(--dim);padding:4px 0;border-bottom:1px solid var(--border)}
+.mini-log-item:first-child{color:var(--text);font-weight:700}
+
+/* ── LOBBY WAITING ── */
+.lobby-wait{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:20px}
+.lobby-wait .lw-emoji{font-size:3.5rem}
+.lobby-wait h2{font-family:'Fredoka One',cursive;font-size:1.8rem}
+.lobby-wait p{color:var(--dim);font-size:.95rem}
+.players-preview{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.pp{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:10px;background:var(--surf);border:1px solid var(--border)}
+.pp-dot{width:12px;height:12px;border-radius:50%}
+.pp-name{font-size:.88rem;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- JOIN SCREEN -->
+<div id="joinScreen">
+  <div class="logo"><h1>🎲 Ludo King</h1><p>Connettiti alla partita</p></div>
+  <div class="join-card">
+    <h2>Entra nel Gioco</h2>
+    <div class="field"><label>Il tuo nome</label><input id="nameInput" type="text" placeholder="Es: Marco" maxlength="16"/></div>
+    <div class="field"><label>Server</label><input id="serverInput" type="text" placeholder="es: ludo.onrender.com"/></div>
+    <button class="btn-join" onclick="connect()">Connettiti 🚀</button>
+    <p class="err" id="errMsg"></p>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="hidden">
+
+  <!-- My color badge -->
+  <div class="color-badge" id="colorBadge">
+    <div class="badge-dot" id="badgeDot"></div>
+    <span class="badge-name" id="badgeName">—</span>
+  </div>
+
+  <!-- Turn info -->
+  <div class="turn-card" id="turnCard">
+    <div class="tc-label">Turno attuale</div>
+    <div class="tc-name" id="turnName">...</div>
+    <div class="tc-sub" id="turnSub"></div>
+  </div>
+
+  <!-- Dice -->
+  <div class="dice-area" id="diceArea">
+    <div class="dice-big" id="diceFace">
+      <div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+      <div class="dot" id="d4"></div><div class="dot" id="d5"></div><div class="dot" id="d6"></div>
+      <div class="dot" id="d7"></div><div class="dot" id="d8"></div><div class="dot" id="d9"></div>
+    </div>
+    <div class="dice-value" id="diceValue">—</div>
+  </div>
+
+  <!-- Action -->
+  <div id="actionArea" style="width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <button class="btn-roll" id="rollBtn" onclick="roll()" disabled>🎲 Lancia il Dado</button>
+    <div class="move-hint hidden" id="moveHint">Tocca una pedina sulla scacchiera</div>
+    <div class="wait-card hidden" id="waitCard">
+      <div class="spin">⏳</div><div class="wt" id="waitName">Aspettando...</div><div class="ws" id="waitSub"></div>
+    </div>
+  </div>
+
+  <!-- Mini log -->
+  <div class="mini-log" id="miniLog"></div>
+</div>
+
+<script>
+const CHX={red:'#e63946',blue:'#1d6fa5',green:'#2a9d56',yellow:'#e9c46a'};
+const EMOJIS={red:'🔴',blue:'🔵',green:'🟢',yellow:'🟡'};
+
+let ws,gameState,myId,myColor,myName;
+
+function connect(){
+  const name=document.getElementById('nameInput').value.trim()||'Giocatore';
+  const server=document.getElementById('serverInput').value.trim();
+  if(!server){setErr('Inserisci il server');return;}
+  const h=server.replace(/^wss?:\/\//,'');
+  const isLocal=/^(localhost|127\.|192\.168\.|10\.)/.test(h);
+  const proto=isLocal?'ws':'wss';
+  const cleanH=!isLocal?h.replace(/:3000$/,''):h;
+  try{ws=new WebSocket(`${proto}://${cleanH}`);}catch{setErr('URL non valido');return;}
+  ws.onopen=()=>ws.send(JSON.stringify({type:'join',name}));
+  ws.onmessage=e=>handle(JSON.parse(e.data));
+  ws.onerror=()=>setErr('Connessione fallita');
+  ws.onclose=()=>{if(myColor)setErr('Disconnesso');};
+  myName=name;
+}
+
+function handle(msg){
+  if(msg.type==='hello'){myId=msg.id;if(msg.state)apply(msg.state);}
+  else if(msg.type==='joined'){myColor=msg.color;myName=msg.name;showGame();}
+  else if(msg.type==='state')apply(msg.state);
+  else if(msg.type==='error')setErr(msg.message);
+}
+
+function send(m){if(ws?.readyState===1)ws.send(JSON.stringify(m));}
+function roll(){send({type:'roll'});}
+
+function showGame(){
+  document.getElementById('joinScreen').classList.add('hidden');
+  document.getElementById('gameScreen').classList.remove('hidden');
+  updateBadge();
+}
+
+function updateBadge(){
+  if(!myColor)return;
+  document.getElementById('badgeDot').style.cssText=`background:${CHX[myColor]};box-shadow:0 0 10px ${CHX[myColor]}`;
+  document.getElementById('badgeName').textContent=`${EMOJIS[myColor]} ${myName}`;
+  document.getElementById('colorBadge').style.borderColor=CHX[myColor];
+}
+
+function apply(s){
+  gameState=s;
+  if(!myColor&&myId){const me=s.players.find(p=>p.id===myId);if(me){myColor=me.color;myName=me.name;showGame();}}
+  if(myColor)render();
+}
+
+function render(){
+  if(!gameState||!myColor)return;
+  const isMyTurn=gameState.currentTurn===myColor;
+  const curPlayer=gameState.players.find(p=>p.color===gameState.currentTurn);
+
+  // Turn card
+  const tc=document.getElementById('turnCard');
+  const tn=document.getElementById('turnName');
+  const ts=document.getElementById('turnSub');
+  if(isMyTurn){
+    tc.classList.add('my-turn');tc.style.background=CHX[myColor]+'22';tc.style.borderColor=CHX[myColor];
+    tn.textContent='Tocca a te!';tn.style.color=CHX[myColor];ts.textContent='È il tuo momento ⚡';
+  }else{
+    tc.classList.remove('my-turn');tc.style.background='';tc.style.borderColor='var(--border)';
+    tn.textContent=curPlayer?`${EMOJIS[curPlayer.color]} ${curPlayer.name}`:'...';tn.style.color='';
+    ts.textContent='Aspetta il tuo turno';
+  }
+
+  // Dice
+  if(gameState.diceValue){
+    showDice(gameState.diceValue,isMyTurn&&gameState.diceRolled);
+    document.getElementById('diceValue').textContent=`Ha fatto: ${gameState.diceValue}`;
+  }else{
+    clearDice();document.getElementById('diceValue').textContent='—';
+  }
+
+  // Buttons
+  const rollBtn=document.getElementById('rollBtn');
+  const moveHint=document.getElementById('moveHint');
+  const waitCard=document.getElementById('waitCard');
+
+  rollBtn.classList.remove('hidden');moveHint.classList.add('hidden');waitCard.classList.add('hidden');
+
+  if(gameState.phase==='lobby'){
+    rollBtn.disabled=true;rollBtn.textContent='Aspettando l\'inizio...';
+    // show lobby players
+    showLobbyWait();
+    return;
+  }
+
+  if(gameState.phase==='finished'){rollBtn.disabled=true;rollBtn.textContent='Partita finita!';return;}
+
+  if(!isMyTurn){
+    rollBtn.classList.add('hidden');waitCard.classList.remove('hidden');
+    document.getElementById('waitName').textContent=curPlayer?`${EMOJIS[curPlayer.color]} ${curPlayer.name}`:'...';
+    document.getElementById('waitSub').textContent='sta giocando...';
+  }else if(!gameState.diceRolled){
+    rollBtn.disabled=false;rollBtn.textContent='🎲 Lancia il Dado';
+  }else if(gameState.movablePieces.length>0){
+    rollBtn.disabled=true;rollBtn.textContent='Scegli la pedina';
+    moveHint.classList.remove('hidden');
+    document.getElementById('moveHint').innerHTML=`Hai fatto <strong>${gameState.diceValue}</strong> — tocca una pedina sulla scacchiera`;
+  }else{
+    rollBtn.disabled=true;rollBtn.textContent='⏳ In attesa...';
+  }
+
+  // Mini log
+  document.getElementById('miniLog').innerHTML=(gameState.log||[]).slice(0,3)
+    .map(e=>`<div class="mini-log-item">${esc(e)}</div>`).join('');
+}
+
+function showLobbyWait(){
+  // Show players in lobby
+  const lw=document.getElementById('waitCard');
+  lw.classList.remove('hidden');
+  document.getElementById('waitName').textContent='Lobby in attesa';
+  document.getElementById('waitSub').textContent=`${gameState.players.length}/4 giocatori connessi`;
+  document.getElementById('rollBtn').classList.add('hidden');
+}
+
+function showDice(v,animate){
+  const P={1:[5],2:[1,9],3:[1,5,9],4:[1,3,7,9],5:[1,3,5,7,9],6:[1,3,4,6,7,9]};
+  clearDice();(P[v]||[]).forEach(i=>{const d=document.getElementById(`d${i}`);d.classList.add('v');if(v===6)d.classList.add('r');});
+  if(animate){const f=document.getElementById('diceFace');f.classList.remove('rolling');void f.offsetWidth;f.classList.add('rolling');setTimeout(()=>f.classList.remove('rolling'),450);}
+}
+function clearDice(){for(let i=1;i<=9;i++){const d=document.getElementById(`d${i}`);d.classList.remove('v','r');}}
+function setErr(msg){document.getElementById('errMsg').textContent=msg;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Pre-fill server
+window.addEventListener('load',()=>{
+  const h=location.hostname||'localhost';
+  const isLocal=/^(localhost|127\.|192\.168\.|10\.)/.test(h);
+  document.getElementById('serverInput').value=isLocal?`${h}:${location.port||3000}`:h;
+  document.getElementById('nameInput').focus();
+});
+</script>
+</body>
+</html>

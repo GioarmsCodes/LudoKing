@@ -9,127 +9,71 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-// ─── Game State ───────────────────────────────────────────────────────────────
+app.get('/player', (req, res) => res.sendFile(path.join(__dirname, 'public', 'player.html')));
 
 const COLORS = ['red', 'blue', 'green', 'yellow'];
-const HOME_POSITIONS = { red: [0,1,2,3], blue: [4,5,6,7], green: [8,9,10,11], yellow: [12,13,14,15] };
 const START_CELLS = { red: 0, blue: 13, green: 26, yellow: 39 };
-const HOME_ENTRY = { red: 50, blue: 11, green: 24, yellow: 37 };
-const HOME_STRETCH = { red: [51,52,53,54,55,56], blue: [57,58,59,60,61,62], green: [63,64,65,66,67,68], yellow: [69,70,71,72,73,74] };
-const SAFE_CELLS = [0, 8, 13, 21, 26, 34, 39, 47];
+const HOME_ENTRY  = { red: 50, blue: 11, green: 24, yellow: 37 };
+const SAFE_CELLS  = [0, 8, 13, 21, 26, 34, 39, 47];
 
 let gameState = createInitialState();
-let clients = new Map(); // ws -> {id, color, name}
+let clients = new Map();
 
 function createInitialState() {
   return {
-    phase: 'lobby', // lobby | playing | finished
-    players: [],    // [{id, color, name, connected}]
+    phase: 'lobby',
+    players: [],
     pieces: initPieces(),
     currentTurn: null,
     diceValue: null,
     diceRolled: false,
     movablePieces: [],
     winner: null,
-    turnCount: 0,
     consecutiveSixes: 0,
-    log: []
+    log: [],
+    seq: 0
   };
 }
 
 function initPieces() {
-  const pieces = {};
-  COLORS.forEach(color => {
-    pieces[color] = [0,1,2,3].map(i => ({
-      id: i,
-      color,
-      cell: -1,       // -1 = home base, 0-51 = main track, 51-74 = home stretch, 100 = finished
-      trackPos: -1,   // position on the main track (0-51)
-      homeStretchPos: -1, // position in home stretch (0-5)
-      finished: false
-    }));
+  const p = {};
+  COLORS.forEach(c => {
+    p[c] = [0,1,2,3].map(i => ({ id: i, color: c, trackPos: -1, homeStretchPos: -1, finished: false }));
   });
-  return pieces;
+  return p;
 }
 
 function addLog(msg) {
   gameState.log.unshift(msg);
-  if (gameState.log.length > 50) gameState.log.pop();
-}
-
-// ─── Game Logic ───────────────────────────────────────────────────────────────
-
-function getActivePlayers() {
-  return gameState.players.filter(p => p.connected);
-}
-
-function nextTurn() {
-  const active = gameState.players.filter(p => p.connected && !isPlayerFinished(p.color));
-  if (active.length === 0) return;
-  
-  const currentIdx = active.findIndex(p => p.color === gameState.currentTurn);
-  const nextIdx = (currentIdx + 1) % active.length;
-  gameState.currentTurn = active[nextIdx].color;
-  gameState.diceValue = null;
-  gameState.diceRolled = false;
-  gameState.movablePieces = [];
-  gameState.consecutiveSixes = 0;
+  if (gameState.log.length > 30) gameState.log.length = 30;
 }
 
 function isPlayerFinished(color) {
   return gameState.pieces[color].every(p => p.finished);
 }
 
-function rollDice() {
-  return Math.floor(Math.random() * 6) + 1;
-}
-
-function getMainTrackCell(color, steps) {
-  // Returns actual track position (0-51) for a piece starting at its start cell + steps
-  return (START_CELLS[color] + steps) % 52;
+function nextTurn() {
+  const active = gameState.players.filter(p => p.connected && !isPlayerFinished(p.color));
+  if (!active.length) return;
+  const idx = active.findIndex(p => p.color === gameState.currentTurn);
+  gameState.currentTurn = active[(idx + 1) % active.length].color;
+  gameState.diceValue = null;
+  gameState.diceRolled = false;
+  gameState.movablePieces = [];
+  gameState.consecutiveSixes = 0;
 }
 
 function getMovablePieces(color, dice) {
-  const pieces = gameState.pieces[color];
   const movable = [];
-
-  pieces.forEach(piece => {
+  gameState.pieces[color].forEach(piece => {
     if (piece.finished) return;
-
-    if (piece.trackPos === -1) {
-      // In home base: need a 6 to come out
-      if (dice === 6) movable.push(piece.id);
-      return;
-    }
-
-    if (piece.homeStretchPos >= 0) {
-      // In home stretch
-      const newPos = piece.homeStretchPos + dice;
-      if (newPos <= 5) movable.push(piece.id);
-      return;
-    }
-
-    // On main track: check if entering home stretch or moving normally
-    const currentAbsPos = (START_CELLS[color] + piece.trackPos) % 52;
-    const entryAbs = HOME_ENTRY[color];
-    
-    // Calculate steps from current position to home entry
-    let stepsToEntry = (entryAbs - currentAbsPos + 52) % 52;
-    if (stepsToEntry === 0) stepsToEntry = 52; // already past entry
-
-    if (dice <= stepsToEntry) {
-      // Can move (either on track or enter stretch)
-      movable.push(piece.id);
-    } else {
-      // Would overshoot home stretch
-      const extraSteps = dice - stepsToEntry;
-      if (extraSteps <= 6 && piece.homeStretchPos + extraSteps <= 5) {
-        movable.push(piece.id);
-      }
-    }
+    if (piece.trackPos === -1) { if (dice === 6) movable.push(piece.id); return; }
+    if (piece.homeStretchPos >= 0) { if (piece.homeStretchPos + dice <= 5) movable.push(piece.id); return; }
+    const curAbs = (START_CELLS[color] + piece.trackPos) % 52;
+    const stepsToEntry = (HOME_ENTRY[color] - curAbs + 52) % 52 || 52;
+    if (dice <= stepsToEntry) { movable.push(piece.id); }
+    else { if (dice - stepsToEntry <= 6) movable.push(piece.id); }
   });
-
   return movable;
 }
 
@@ -138,81 +82,47 @@ function movePiece(color, pieceId) {
   const dice = gameState.diceValue;
   let captured = false;
 
-  if (piece.trackPos === -1 && dice === 6) {
-    // Leave home base
+  if (piece.trackPos === -1) {
     piece.trackPos = 0;
-    const cell = START_CELLS[color];
-    piece.cell = cell;
-    addLog(`${colorEmoji(color)} ${color} porta una pedina in campo`);
-
-    // Check capture
-    captured = checkCapture(color, piece, cell);
+    addLog(`${emoji(color)} ${color} porta una pedina in gioco`);
+    captured = checkCapture(color, piece);
     return captured;
   }
 
   if (piece.homeStretchPos >= 0) {
-    // Moving in home stretch
-    piece.homeStretchPos += dice;
-    if (piece.homeStretchPos === 5) {
-      piece.finished = true;
-      piece.cell = 100;
-      addLog(`🏆 ${colorEmoji(color)} ${color} ha portato una pedina a casa!`);
-      checkWinner();
-    }
+    piece.homeStretchPos = Math.min(5, piece.homeStretchPos + dice);
+    if (piece.homeStretchPos >= 5) { piece.finished = true; addLog(`🏆 ${emoji(color)} pedina a casa!`); checkWinner(); }
     return false;
   }
 
-  // On main track
-  const entryAbs = HOME_ENTRY[color];
-  const currentAbs = (START_CELLS[color] + piece.trackPos) % 52;
-  const stepsToEntry = (entryAbs - currentAbs + 52) % 52 || 52;
+  const curAbs = (START_CELLS[color] + piece.trackPos) % 52;
+  const stepsToEntry = (HOME_ENTRY[color] - curAbs + 52) % 52 || 52;
 
-  if (dice <= stepsToEntry) {
+  if (dice < stepsToEntry) {
     piece.trackPos += dice;
-    const newAbs = (START_CELLS[color] + piece.trackPos) % 52;
-    
-    if (dice === stepsToEntry) {
-      // Enter home stretch at position 0
-      piece.homeStretchPos = 0;
-      piece.cell = HOME_STRETCH[color][0];
-      piece.trackPos = -2; // sentinel: in home stretch
-    } else {
-      piece.cell = newAbs;
-      captured = checkCapture(color, piece, newAbs);
-    }
+    captured = checkCapture(color, piece);
   } else {
-    // Enter home stretch
-    const extraSteps = dice - stepsToEntry;
-    piece.homeStretchPos = extraSteps - 1;
-    piece.cell = HOME_STRETCH[color][piece.homeStretchPos];
+    const extra = dice - stepsToEntry;
     piece.trackPos = -2;
-    if (piece.homeStretchPos === 5) {
-      piece.finished = true;
-      piece.cell = 100;
-      addLog(`🏆 ${colorEmoji(color)} ${color} ha portato una pedina a casa!`);
-      checkWinner();
-    }
+    piece.homeStretchPos = Math.max(0, extra - 1);
+    if (piece.homeStretchPos >= 5) { piece.homeStretchPos = 5; piece.finished = true; addLog(`🏆 ${emoji(color)} pedina a casa!`); checkWinner(); }
   }
-
   return captured;
 }
 
-function checkCapture(attackerColor, piece, cell) {
-  if (SAFE_CELLS.includes(cell)) return false;
-  
+function checkCapture(attColor, piece) {
+  if (piece.trackPos === -2 || piece.trackPos < 0) return false;
+  const absPos = (START_CELLS[attColor] + piece.trackPos) % 52;
+  if (SAFE_CELLS.includes(absPos)) return false;
   let captured = false;
   COLORS.forEach(color => {
-    if (color === attackerColor) return;
-    if (!gameState.players.find(p => p.color === color)) return;
-    
-    gameState.pieces[color].forEach(target => {
-      if (target.cell === cell && !target.finished && target.trackPos >= 0 && target.homeStretchPos < 0) {
-        // Captured! Send back home
-        target.trackPos = -1;
-        target.homeStretchPos = -1;
-        target.cell = -1;
-        captured = true;
-        addLog(`💥 ${colorEmoji(attackerColor)} ${attackerColor} ha catturato una pedina di ${color}!`);
+    if (color === attColor || !gameState.players.find(p => p.color === color)) return;
+    gameState.pieces[color].forEach(t => {
+      if (!t.finished && t.trackPos >= 0 && t.homeStretchPos < 0) {
+        if ((START_CELLS[color] + t.trackPos) % 52 === absPos) {
+          t.trackPos = -1; t.homeStretchPos = -1; captured = true;
+          addLog(`💥 ${emoji(attColor)} cattura pedina di ${color}!`);
+        }
       }
     });
   });
@@ -220,149 +130,96 @@ function checkCapture(attackerColor, piece, cell) {
 }
 
 function checkWinner() {
-  const winner = gameState.players.find(p => isPlayerFinished(p.color));
-  if (winner) {
-    gameState.winner = winner.color;
-    gameState.phase = 'finished';
-    addLog(`🎉 ${colorEmoji(winner.color)} ${winner.name} ha vinto la partita!`);
-  }
+  const w = gameState.players.find(p => isPlayerFinished(p.color));
+  if (w) { gameState.winner = w.color; gameState.phase = 'finished'; addLog(`🎉 ${w.name} ha vinto!`); }
 }
 
-function colorEmoji(color) {
-  return { red: '🔴', blue: '🔵', green: '🟢', yellow: '🟡' }[color] || '';
-}
-
-// ─── WebSocket Handlers ───────────────────────────────────────────────────────
+function emoji(c) { return {red:'🔴',blue:'🔵',green:'🟢',yellow:'🟡'}[c]||''; }
 
 function broadcast(msg) {
+  gameState.seq++;
   const data = JSON.stringify(msg);
-  wss.clients.forEach(ws => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(data);
-  });
+  wss.clients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 }
-
-function sendTo(ws, msg) {
-  if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
-}
-
-function broadcastState() {
-  broadcast({ type: 'state', state: gameState });
-}
+function sendTo(ws, msg) { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg)); }
+function broadcastState() { broadcast({ type: 'state', state: gameState }); }
 
 wss.on('connection', (ws) => {
-  const clientId = uuidv4();
-  clients.set(ws, { id: clientId, color: null, name: null });
+  const id = uuidv4();
+  clients.set(ws, { id, color: null, name: null, role: null });
+  sendTo(ws, { type: 'hello', id, state: gameState });
 
-  sendTo(ws, { type: 'connected', id: clientId, state: gameState });
-
-  ws.on('message', (raw) => {
-    let msg;
-    try { msg = JSON.parse(raw); } catch { return; }
+  ws.on('message', raw => {
+    let msg; try { msg = JSON.parse(raw); } catch { return; }
     const client = clients.get(ws);
 
     switch (msg.type) {
 
+      case 'register_display': {
+        client.role = 'display';
+        sendTo(ws, { type: 'state', state: gameState });
+        break;
+      }
+
       case 'join': {
-        if (gameState.phase !== 'lobby') {
-          sendTo(ws, { type: 'error', message: 'Partita già iniziata' });
-          return;
-        }
-        if (gameState.players.length >= 4) {
-          sendTo(ws, { type: 'error', message: 'Lobby piena (max 4 giocatori)' });
-          return;
-        }
-        const takenColors = gameState.players.map(p => p.color);
-        const availableColor = COLORS.find(c => !takenColors.includes(c));
-        if (!availableColor) return;
-
+        if (gameState.phase !== 'lobby') { sendTo(ws, { type: 'error', message: 'Partita già iniziata' }); return; }
+        if (gameState.players.length >= 4) { sendTo(ws, { type: 'error', message: 'Lobby piena' }); return; }
+        const taken = gameState.players.map(p => p.color);
+        const color = COLORS.find(c => !taken.includes(c));
+        if (!color) return;
         const name = (msg.name || 'Giocatore').slice(0, 16);
-        client.color = availableColor;
-        client.name = name;
-
-        gameState.players.push({ id: clientId, color: availableColor, name, connected: true });
-        addLog(`${colorEmoji(availableColor)} ${name} è entrato come ${availableColor}`);
-        sendTo(ws, { type: 'joined', color: availableColor, name });
+        client.color = color; client.name = name; client.role = 'player';
+        gameState.players.push({ id, color, name, connected: true });
+        addLog(`${emoji(color)} ${name} è entrato`);
+        sendTo(ws, { type: 'joined', color, name });
         broadcastState();
         break;
       }
 
       case 'start': {
-        if (gameState.phase !== 'lobby') return;
-        if (gameState.players.length < 1) return;
-        if (client.color !== gameState.players[0].color) {
-          sendTo(ws, { type: 'error', message: 'Solo il primo giocatore può avviare' });
-          return;
-        }
+        if (gameState.phase !== 'lobby' || !gameState.players.length) return;
         gameState.phase = 'playing';
         gameState.currentTurn = gameState.players[0].color;
-        addLog('🎮 La partita è iniziata!');
+        addLog('🎮 Partita iniziata!');
         broadcastState();
         break;
       }
 
       case 'roll': {
         if (gameState.phase !== 'playing') return;
-        if (client.color !== gameState.currentTurn) {
-          sendTo(ws, { type: 'error', message: 'Non è il tuo turno' });
-          return;
-        }
-        if (gameState.diceRolled) {
-          sendTo(ws, { type: 'error', message: 'Dado già lanciato' });
-          return;
-        }
+        if (client.color !== gameState.currentTurn) { sendTo(ws, { type: 'error', message: 'Non è il tuo turno' }); return; }
+        if (gameState.diceRolled) return;
 
-        const dice = rollDice();
+        const dice = Math.floor(Math.random() * 6) + 1;
         gameState.diceValue = dice;
         gameState.diceRolled = true;
-
-        addLog(`${colorEmoji(client.color)} ${client.color} ha lanciato: ${dice}`);
+        addLog(`${emoji(client.color)} lancia ${dice}`);
 
         const movable = getMovablePieces(client.color, dice);
         gameState.movablePieces = movable;
+        broadcastState();
 
         if (movable.length === 0) {
-          addLog(`${colorEmoji(client.color)} ${client.color} non ha mosse disponibili`);
           setTimeout(() => {
             if (dice === 6) {
-              gameState.consecutiveSixes++;
-              if (gameState.consecutiveSixes >= 3) {
-                addLog(`⚠️ ${client.color} tre sei di fila: turno saltato`);
-                nextTurn();
-              } else {
-                gameState.diceRolled = false;
-                gameState.diceValue = null;
-                gameState.movablePieces = [];
-              }
-            } else {
-              nextTurn();
-            }
+              if (++gameState.consecutiveSixes >= 3) { addLog('⚠️ Tre sei: turno saltato'); nextTurn(); }
+              else { gameState.diceRolled = false; gameState.diceValue = null; gameState.movablePieces = []; }
+            } else { nextTurn(); }
             broadcastState();
-          }, 1200);
+          }, 900);
         } else if (movable.length === 1) {
-          // Auto-move if only one option
           setTimeout(() => {
-            const captured = movePiece(client.color, movable[0]);
+            const cap = movePiece(client.color, movable[0]);
             gameState.movablePieces = [];
-            
             if (gameState.phase !== 'finished') {
-              if (dice === 6 || captured) {
+              if (dice === 6 || cap) {
                 gameState.consecutiveSixes = dice === 6 ? gameState.consecutiveSixes + 1 : 0;
-                if (gameState.consecutiveSixes >= 3) {
-                  addLog(`⚠️ Tre sei di fila: turno saltato`);
-                  nextTurn();
-                } else {
-                  gameState.diceRolled = false;
-                  gameState.diceValue = null;
-                }
-              } else {
-                gameState.consecutiveSixes = 0;
-                nextTurn();
-              }
+                if (gameState.consecutiveSixes >= 3) { addLog('⚠️ Tre sei: turno saltato'); nextTurn(); }
+                else { gameState.diceRolled = false; gameState.diceValue = null; }
+              } else { gameState.consecutiveSixes = 0; nextTurn(); }
             }
             broadcastState();
-          }, 600);
-        } else {
-          broadcastState();
+          }, 500);
         }
         break;
       }
@@ -370,27 +227,16 @@ wss.on('connection', (ws) => {
       case 'move': {
         if (gameState.phase !== 'playing') return;
         if (client.color !== gameState.currentTurn) return;
-        if (!gameState.diceRolled) return;
-        if (!gameState.movablePieces.includes(msg.pieceId)) return;
-
-        const captured = movePiece(client.color, msg.pieceId);
+        if (!gameState.diceRolled || !gameState.movablePieces.includes(msg.pieceId)) return;
+        const cap = movePiece(client.color, msg.pieceId);
         gameState.movablePieces = [];
-
         if (gameState.phase !== 'finished') {
-          const dice = gameState.diceValue;
-          if (dice === 6 || captured) {
-            gameState.consecutiveSixes = dice === 6 ? gameState.consecutiveSixes + 1 : 0;
-            if (gameState.consecutiveSixes >= 3) {
-              addLog(`⚠️ Tre sei di fila: turno saltato`);
-              nextTurn();
-            } else {
-              gameState.diceRolled = false;
-              gameState.diceValue = null;
-            }
-          } else {
-            gameState.consecutiveSixes = 0;
-            nextTurn();
-          }
+          const d = gameState.diceValue;
+          if (d === 6 || cap) {
+            gameState.consecutiveSixes = d === 6 ? gameState.consecutiveSixes + 1 : 0;
+            if (gameState.consecutiveSixes >= 3) { addLog('⚠️ Tre sei: turno saltato'); nextTurn(); }
+            else { gameState.diceRolled = false; gameState.diceValue = null; }
+          } else { gameState.consecutiveSixes = 0; nextTurn(); }
         }
         broadcastState();
         break;
@@ -398,23 +244,19 @@ wss.on('connection', (ws) => {
 
       case 'restart': {
         if (gameState.phase !== 'finished') return;
+        const old = gameState.players.map(p => ({...p}));
         gameState = createInitialState();
-        // Re-add players
-        clients.forEach((c, clientWs) => {
-          if (c.color) {
-            const player = { id: c.id, color: c.color, name: c.name, connected: true };
-            gameState.players.push(player);
-          }
+        old.forEach(p => {
+          if ([...clients.values()].find(cl => cl.id === p.id)) gameState.players.push({...p, connected: true});
         });
-        addLog('🔄 Nuova partita iniziata!');
+        addLog('🔄 Nuova partita!');
         broadcastState();
         break;
       }
 
       case 'reset': {
         gameState = createInitialState();
-        clients.forEach((c) => { c.color = null; c.name = null; });
-        addLog('🔄 Lobby resettata');
+        clients.forEach(c => { c.color = null; c.name = null; });
         broadcastState();
         break;
       }
@@ -423,15 +265,12 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     const client = clients.get(ws);
-    if (client && client.color) {
-      const player = gameState.players.find(p => p.id === client.id);
-      if (player) {
-        player.connected = false;
-        addLog(`❌ ${client.name} si è disconnesso`);
-        // If it's their turn, skip
-        if (gameState.currentTurn === client.color && gameState.phase === 'playing') {
-          nextTurn();
-        }
+    if (client?.color) {
+      const p = gameState.players.find(p => p.id === client.id);
+      if (p) {
+        p.connected = false;
+        addLog(`❌ ${client.name} disconnesso`);
+        if (gameState.currentTurn === client.color && gameState.phase === 'playing') nextTurn();
         broadcastState();
       }
     }
@@ -441,8 +280,8 @@ wss.on('connection', (ws) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🎲 Ludo King Server running!`);
-  console.log(`📡 Local:   http://localhost:${PORT}`);
-  console.log(`🌐 Network: http://YOUR_IP:${PORT}`);
-  console.log(`\nCondividi l'IP di rete con i tuoi giocatori!\n`);
+  console.log(`\n🎲 Ludo King`);
+  console.log(`📺 Display (scacchiera): http://localhost:${PORT}/`);
+  console.log(`📱 Giocatori (dado):     http://localhost:${PORT}/player`);
+  console.log(`\n🌐 Su rete locale sostituisci localhost con il tuo IP\n`);
 });
