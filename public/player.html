@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🎲 Ludo King</title>
+<title>🎲 Ludo King 6</title>
 <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --red:#ff3d5a;--red-l:#ff8fa3;--red-d:#c0001a;
-  --blue:#2196f3;--blue-l:#64b5f6;--blue-d:#0d47a1;
-  --green:#00c853;--green-l:#69f0ae;--green-d:#007b33;
-  --yellow:#ffd600;--yellow-l:#ffff52;--yellow-d:#c7a500;
-  --bg:#1a0533;--surf:#26084a;--surf2:#331060;--border:#4a1880;--text:#fff;--dim:#b39ddb;
+  --red:#ff3d5a;--blue:#2196f3;--green:#00c853;--yellow:#ffd600;
+  --orange:#ff9100;--purple:#aa00ff;
+  --bg:#0d0120;--surf:#1a0533;--surf2:#26084a;--border:#3a1065;--text:#fff;--dim:#b39ddb;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden}
@@ -19,8 +17,8 @@ body{
   font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background-image:
-    radial-gradient(ellipse at 20% 15%,rgba(255,61,90,.2) 0,transparent 50%),
-    radial-gradient(ellipse at 80% 85%,rgba(33,150,243,.18) 0,transparent 50%),
+    radial-gradient(ellipse at 20% 15%,rgba(255,61,90,.18) 0,transparent 50%),
+    radial-gradient(ellipse at 80% 85%,rgba(33,150,243,.15) 0,transparent 50%),
     radial-gradient(ellipse at 50% 50%,rgba(170,0,255,.1) 0,transparent 60%);
 }
 
@@ -28,117 +26,121 @@ body{
 #joinScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px 18px;width:100%;min-height:100vh}
 #joinScreen.hidden{display:none}
 .logo h1{
-  font-family:'Boogaloo',cursive;font-size:3.2rem;text-align:center;letter-spacing:.04em;
-  background:linear-gradient(90deg,#ff3d5a,#ff9800,#ffd600,#00c853,#2196f3,#aa00ff);
-  background-size:200%;animation:rainbow 3s linear infinite;
+  font-family:'Boogaloo',cursive;font-size:3rem;text-align:center;letter-spacing:.04em;
+  background:linear-gradient(90deg,#ff3d5a,#ff9100,#ffd600,#00c853,#2196f3,#aa00ff);
+  background-size:300%;animation:rainbow 4s linear infinite;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-@keyframes rainbow{0%{background-position:0%}100%{background-position:200%}}
-.logo p{color:var(--dim);text-align:center;margin-top:4px}
-.jcard{background:var(--surf);border:2px solid var(--border);border-radius:22px;padding:26px;width:100%;max-width:360px;
+@keyframes rainbow{0%{background-position:0%}100%{background-position:300%}}
+.logo p{color:var(--dim);text-align:center;margin-top:4px;font-size:.9rem}
+.jcard{background:var(--surf);border:2px solid var(--border);border-radius:22px;padding:24px;width:100%;max-width:360px;
   box-shadow:0 0 40px rgba(170,0,255,.25)}
-.jcard h2{font-family:'Boogaloo',cursive;font-size:1.6rem;letter-spacing:.04em;margin-bottom:18px;text-align:center}
-.field{margin-bottom:15px}
-.field label{display:block;font-weight:900;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:6px}
+.jcard h2{font-family:'Boogaloo',cursive;font-size:1.5rem;letter-spacing:.04em;margin-bottom:16px;text-align:center}
+.field{margin-bottom:14px}
+.field label{display:block;font-weight:900;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:5px}
 .field input{width:100%;background:var(--surf2);border:2px solid var(--border);border-radius:11px;
-  padding:13px 15px;color:#fff;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;transition:border-color .2s}
+  padding:12px 14px;color:#fff;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;transition:border-color .2s}
 .field input:focus{outline:none;border-color:#aa00ff}
-.btn-join{width:100%;padding:16px;border:none;border-radius:13px;font-family:'Boogaloo',cursive;font-size:1.3rem;
+.btn-join{width:100%;padding:15px;border:none;border-radius:13px;font-family:'Boogaloo',cursive;font-size:1.25rem;
   letter-spacing:.05em;cursor:pointer;background:linear-gradient(135deg,#aa00ff,#2196f3);color:white;
   transition:all .2s;box-shadow:0 4px 20px rgba(170,0,255,.45)}
 .btn-join:active{transform:scale(.97)}
-.err{color:var(--red);font-size:.85rem;text-align:center;margin-top:8px;min-height:1.1em}
+.err{color:var(--red);font-size:.82rem;text-align:center;margin-top:8px;min-height:1.1em}
 
 /* ── GAME ── */
 #gameScreen{display:none;flex-direction:column;align-items:center;width:100%;height:100vh;
-  padding:10px 14px 18px;gap:8px;overflow:hidden}
+  padding:8px 12px 12px;gap:6px;overflow:hidden}
 #gameScreen.active{display:flex}
 
-/* Badge */
-.badge{display:flex;align-items:center;gap:10px;padding:7px 18px;border-radius:999px;
+.badge{display:flex;align-items:center;gap:10px;padding:6px 16px;border-radius:999px;
   background:var(--surf);border:2px solid var(--border);transition:all .4s;flex-shrink:0}
-.badge-dot{width:15px;height:15px;border-radius:50%}
-.badge-name{font-family:'Boogaloo',cursive;font-size:1.15rem;letter-spacing:.04em}
+.badge-dot{width:14px;height:14px;border-radius:50%}
+.badge-name{font-family:'Boogaloo',cursive;font-size:1.1rem;letter-spacing:.04em}
 
-/* Turn card */
-.turn-card{width:100%;max-width:400px;padding:10px 16px;border-radius:16px;
+.turn-card{width:100%;max-width:400px;padding:9px 14px;border-radius:14px;
   background:var(--surf);border:2px solid var(--border);text-align:center;transition:all .4s;flex-shrink:0}
 .turn-card.my-turn{animation:turnPulse 1.2s ease infinite alternate}
 @keyframes turnPulse{
-  from{box-shadow:0 0 14px rgba(255,61,90,.3),0 0 0 0 rgba(255,61,90,.2)}
-  to{box-shadow:0 0 32px rgba(255,61,90,.7),0 0 0 8px rgba(255,61,90,0)}
+  from{box-shadow:0 0 14px rgba(255,255,255,.2),0 0 0 0 rgba(255,255,255,.1)}
+  to{box-shadow:0 0 32px rgba(255,255,255,.5),0 0 0 8px rgba(255,255,255,0)}
 }
-.tc-lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);font-weight:900}
-.tc-name{font-family:'Boogaloo',cursive;font-size:1.5rem;letter-spacing:.04em;line-height:1.2}
-.tc-sub{font-size:.8rem;color:var(--dim)}
+.tc-lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);font-weight:900}
+.tc-name{font-family:'Boogaloo',cursive;font-size:1.4rem;letter-spacing:.04em;line-height:1.2}
+.tc-sub{font-size:.75rem;color:var(--dim)}
 
-/* Play area */
-.play-area{display:flex;align-items:center;justify-content:center;gap:12px;
+/* ── DICE AREA ── */
+.play-area{display:flex;align-items:center;justify-content:center;gap:10px;
   width:100%;max-width:440px;flex:1;min-height:0}
-
-/* Dice column */
-.dice-col{display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0;width:110px}
-
-/* Big dice */
+.dice-col{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;width:108px}
 .dice-big{
-  width:92px;height:92px;border-radius:18px;
+  width:86px;height:86px;border-radius:16px;
   background:linear-gradient(145deg,#fff,#e0e0f0);
   display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
-  gap:6px;padding:12px;
-  box-shadow:0 8px 28px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.9),inset 0 -2px 0 rgba(0,0,0,.1);
-  transition:transform .1s;
-  position:relative;
+  gap:5px;padding:11px;
+  box-shadow:0 8px 26px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.9),inset 0 -2px 0 rgba(0,0,0,.1);
 }
 .dice-big.rolling{animation:diceRoll .5s cubic-bezier(.36,.07,.19,.97)}
 @keyframes diceRoll{
-  0%{transform:rotate(0) scale(1)}
-  15%{transform:rotate(-20deg) scale(1.15) translateY(-5px)}
-  30%{transform:rotate(15deg) scale(.9) translateY(3px)}
-  50%{transform:rotate(-10deg) scale(1.08) translateY(-3px)}
-  70%{transform:rotate(6deg) scale(.96)}
-  85%{transform:rotate(-3deg) scale(1.02)}
-  100%{transform:rotate(0) scale(1)}
+  0%{transform:rotate(0) scale(1)}15%{transform:rotate(-20deg) scale(1.15) translateY(-5px)}
+  30%{transform:rotate(15deg) scale(.9) translateY(3px)}50%{transform:rotate(-10deg) scale(1.08)}
+  70%{transform:rotate(6deg) scale(.96)}100%{transform:rotate(0) scale(1)}
 }
 .dot{width:100%;height:100%;border-radius:50%;background:#1a0533;display:none}
-.dot.v{display:block}
-.dot.r{background:var(--red);box-shadow:0 0 4px var(--red)}
-.dice-val{font-family:'Boogaloo',cursive;font-size:.95rem;color:var(--dim);text-align:center}
-
-/* Roll button */
+.dot.v{display:block}.dot.r{background:var(--red);box-shadow:0 0 4px var(--red)}
+.dice-val{font-family:'Boogaloo',cursive;font-size:.9rem;color:var(--dim);text-align:center}
 .btn-roll{
-  width:100%;padding:13px 8px;border:none;border-radius:14px;
-  font-family:'Boogaloo',cursive;font-size:1.15rem;letter-spacing:.05em;
+  width:100%;padding:12px 6px;border:none;border-radius:13px;
+  font-family:'Boogaloo',cursive;font-size:1.1rem;letter-spacing:.05em;
   cursor:pointer;color:white;transition:all .15s;
   background:linear-gradient(135deg,#ff3d5a,#aa00ff);
-  box-shadow:0 5px 18px rgba(255,61,90,.45);
+  box-shadow:0 5px 18px rgba(255,61,90,.4);
 }
 .btn-roll:active:not(:disabled){transform:scale(.94)}
 .btn-roll:disabled{opacity:.28;cursor:not-allowed;box-shadow:none}
+.pick-hint{font-size:.75rem;color:var(--dim);text-align:center;line-height:1.4}
+.pick-hint strong{color:#ffd600;font-size:.95rem}
 
-/* Pick hint */
-.pick-hint{font-size:.8rem;color:var(--dim);text-align:center;line-height:1.4}
-.pick-hint strong{color:#ffd600;font-size:1rem}
-
-/* Board col */
+/* ── BOARD / WAIT ── */
 .board-col{flex:1;display:flex;align-items:center;justify-content:center;min-width:0}
-#miniBoard{border-radius:14px;display:block;touch-action:none;
-  box-shadow:0 0 24px rgba(170,0,255,.25),0 6px 20px rgba(0,0,0,.5)}
+#miniBoard{border-radius:12px;display:block;touch-action:none;
+  box-shadow:0 0 20px rgba(170,0,255,.22),0 6px 18px rgba(0,0,0,.5)}
 #miniBoard.hidden{display:none}
-
-/* Wait block */
-.wait-block{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.wait-block{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
 .wait-block.hidden{display:none}
-.spin-emoji{font-size:2.8rem;animation:spinFloat 2s ease infinite}
+.spin-emoji{font-size:2.5rem;animation:spinFloat 2s ease infinite}
 @keyframes spinFloat{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(180deg)}100%{transform:translateY(0) rotate(360deg)}}
-.wt{font-family:'Boogaloo',cursive;font-size:1.25rem;letter-spacing:.04em}
-.ws{color:var(--dim);font-size:.85rem}
+.wt{font-family:'Boogaloo',cursive;font-size:1.2rem;letter-spacing:.04em}
+.ws{color:var(--dim);font-size:.8rem}
 
-/* Mini log */
-.mini-log{width:100%;max-width:400px;flex-shrink:0}
-.mle{font-size:.76rem;color:var(--dim);padding:3px 0;border-bottom:1px solid var(--border)}
+/* ── EMOJI REACTIONS ── */
+.emoji-section{
+  width:100%;max-width:400px;flex-shrink:0;
+  background:var(--surf);border:2px solid var(--border);border-radius:16px;
+  padding:10px 12px;
+}
+.emoji-section h4{
+  font-family:'Boogaloo',cursive;font-size:.9rem;color:var(--dim);letter-spacing:.04em;
+  margin-bottom:8px;text-align:center;
+}
+.emoji-grid{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
+}
+.emoji-btn{
+  aspect-ratio:1;border:2px solid var(--border);border-radius:12px;
+  background:var(--surf2);
+  font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;user-select:none;
+}
+.emoji-btn:active{transform:scale(.82);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12);}
+.emoji-btn.sent{animation:emojiSent .4s ease;border-color:rgba(255,255,255,.5);}
+@keyframes emojiSent{
+  0%{transform:scale(1)}40%{transform:scale(1.35)}70%{transform:scale(.9)}100%{transform:scale(1)}
+}
+
+.mini-log{width:100%;max-width:400px;flex-shrink:0;max-height:42px;overflow:hidden}
+.mle{font-size:.7rem;color:var(--dim);padding:2px 0;border-bottom:1px solid var(--border)}
 .mle:first-child{color:#fff;font-weight:800}
 
-/* Particle canvas */
 #pCanvas{position:fixed;inset:0;pointer-events:none;z-index:100}
 </style>
 </head>
@@ -147,7 +149,7 @@ body{
 
 <!-- JOIN -->
 <div id="joinScreen">
-  <div class="logo"><h1>🎲 Ludo King</h1><p>Entra nella partita!</p></div>
+  <div class="logo"><h1>🎲 Ludo King 6</h1><p>Fino a 6 giocatori!</p></div>
   <div class="jcard">
     <h2>👤 Chi sei?</h2>
     <div class="field"><label>Il tuo nome</label><input id="nameInput" type="text" placeholder="Es: Marco" maxlength="16"/></div>
@@ -189,32 +191,71 @@ body{
     </div>
   </div>
 
+  <!-- EMOJI REACTIONS -->
+  <div class="emoji-section">
+    <h4>😂 Manda una reaction!</h4>
+    <div class="emoji-grid" id="emojiGrid"></div>
+  </div>
+
   <div class="mini-log" id="miniLog"></div>
 </div>
 
 <script>
-// ── Constants ─────────────────────────────────────────────────────────────────
-const CHX={red:'#ff3d5a',blue:'#2196f3',green:'#00c853',yellow:'#ffd600'};
-const CHL={red:'#ff8fa3',blue:'#64b5f6',green:'#69f0ae',yellow:'#ffff52'};
-const CHD={red:'#c0001a',blue:'#0d47a1',green:'#007b33',yellow:'#c7a500'};
-const EMOJIS={red:'🔴',blue:'🔵',green:'🟢',yellow:'🟡'};
-const START={red:0,blue:13,green:26,yellow:39};
-const SAFE=[0,8,13,21,26,34,39,47];
-const SEG={red:[0,1,2,3,4,5],blue:[13,14,15,16,17,18],green:[26,27,28,29,30,31],yellow:[39,40,41,42,43,44]};
+const CHX={red:'#ff3d5a',blue:'#2196f3',green:'#00c853',yellow:'#ffd600',orange:'#ff9100',purple:'#aa00ff'};
+const CHL={red:'#ff8fa3',blue:'#64b5f6',green:'#69f0ae',yellow:'#ffff52',orange:'#ffcc02',purple:'#e040fb'};
+const CHD={red:'#c0001a',blue:'#0d47a1',green:'#007b33',yellow:'#c7a500',orange:'#e65100',purple:'#6200ea'};
+const EMOJIS={red:'🔴',blue:'🔵',green:'🟢',yellow:'🟡',orange:'🟠',purple:'🟣'};
+const COLORS=['red','blue','green','yellow','orange','purple'];
+const TRACK_SIZE=54;
+const START={red:0,blue:9,green:18,yellow:27,orange:36,purple:45};
+const SAFE=[0,4,9,13,18,22,27,31,36,40,45,49];
+const SEG_START=[0,9,18,27,36,45]; // start of each color's arm on track
 
-function buildTrack(){const t=[];for(let c=0;c<=5;c++)t.push({r:6,c});for(let r=5;r>=0;r--)t.push({r,c:6});t.push({r:0,c:7});t.push({r:0,c:8});for(let r=1;r<=5;r++)t.push({r,c:8});for(let c=9;c<=14;c++)t.push({r:6,c});t.push({r:7,c:14});t.push({r:8,c:14});for(let c=13;c>=9;c--)t.push({r:8,c});for(let r=9;r<=14;r++)t.push({r,c:8});t.push({r:14,c:7});t.push({r:14,c:6});for(let r=13;r>=9;r--)t.push({r,c:6});for(let c=5;c>=0;c--)t.push({r:8,c});t.push({r:7,c:0});return t;}
-const TRACK=buildTrack();
-const STRETCH={
-  red:   [{r:7,c:1},{r:7,c:2},{r:7,c:3},{r:7,c:4},{r:7,c:5},{r:7,c:6}],
-  blue:  [{r:1,c:7},{r:2,c:7},{r:3,c:7},{r:4,c:7},{r:5,c:7},{r:6,c:7}],
-  green: [{r:7,c:13},{r:7,c:12},{r:7,c:11},{r:7,c:10},{r:7,c:9},{r:7,c:8}],
-  yellow:[{r:13,c:7},{r:12,c:7},{r:11,c:7},{r:10,c:7},{r:9,c:7},{r:8,c:7}],
-};
+// Emoji reactions available
+const REACTION_EMOJIS=['😂','🔥','💀','😤','👑','🎉','🤬','😭','🫡','🤡','💪','🙈'];
 
 let ws,gameState,myId,myColor,myName,S=0;
 let particles=[];
 
-// ── Connection ────────────────────────────────────────────────────────────────
+// Build emoji grid
+function buildEmojiGrid(){
+  const grid=document.getElementById('emojiGrid');
+  grid.innerHTML=REACTION_EMOJIS.map(e=>
+    `<button class="emoji-btn" onclick="sendReaction('${e}')" title="${e}">${e}</button>`
+  ).join('');
+}
+buildEmojiGrid();
+
+// Cooldown tracker per emoji
+const cooldowns={};
+function sendReaction(emoji){
+  const now=Date.now();
+  if(cooldowns[emoji]&&now-cooldowns[emoji]<1500)return; // 1.5s cooldown per emoji
+  cooldowns[emoji]=now;
+  send({type:'reaction',emoji});
+  // Visual feedback
+  const btns=[...document.querySelectorAll('.emoji-btn')];
+  const btn=btns.find(b=>b.textContent===emoji);
+  if(btn){
+    btn.classList.remove('sent');void btn.offsetWidth;btn.classList.add('sent');
+    setTimeout(()=>btn.classList.remove('sent'),400);
+  }
+  spawnSelfReaction(emoji);
+}
+
+function spawnSelfReaction(emoji){
+  // Spawn locally too for instant feedback
+  const face=document.getElementById('diceFace');
+  const r=face.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<8;i++){
+    const a=Math.random()*Math.PI*2;const spd=2+Math.random()*3;
+    particles.push({x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-4,
+      emoji,life:1,decay:.022+Math.random()*.015,r:18+Math.random()*10});
+  }
+}
+
+// ── Connection ─────────────────────────────────────────────────────────────────
 function doConnect(){
   const name=document.getElementById('nameInput').value.trim()||'Giocatore';
   const server=document.getElementById('serverInput').value.trim();
@@ -235,11 +276,11 @@ function handle(msg){
   else if(msg.type==='joined'){myColor=msg.color;myName=msg.name;showGame();}
   else if(msg.type==='state')apply(msg.state);
   else if(msg.type==='error')setErr(msg.message);
+  // reactions from others are handled by display, not player client
 }
 function send(m){if(ws?.readyState===1)ws.send(JSON.stringify(m));}
 function doRoll(){
   send({type:'roll'});
-  // Animate dice immediately for snappiness
   const face=document.getElementById('diceFace');
   face.classList.remove('rolling');void face.offsetWidth;face.classList.add('rolling');
   setTimeout(()=>face.classList.remove('rolling'),500);
@@ -263,7 +304,7 @@ function apply(s){
   if(myColor)render();
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
+// ── Render ─────────────────────────────────────────────────────────────────────
 let prevDice=null;
 function render(){
   if(!gameState||!myColor)return;
@@ -289,42 +330,32 @@ function render(){
     const face=document.getElementById('diceFace');
     face.classList.remove('rolling');void face.offsetWidth;face.classList.add('rolling');
     setTimeout(()=>face.classList.remove('rolling'),500);
-    if(gameState.diceValue===6) spawnStars();
+    if(gameState.diceValue===6)spawnStars();
     prevDice=gameState.diceValue;
-  } else if(!gameState.diceValue){ prevDice=null; }
+  } else if(!gameState.diceValue){prevDice=null;}
 
-  // Dice dots
   if(gameState.diceValue){setDots(gameState.diceValue);document.getElementById('diceVal').textContent=`Fatto: ${gameState.diceValue}`;}
   else{clearDots();document.getElementById('diceVal').textContent='—';}
 
-  // Buttons
   const btn=document.getElementById('rollBtn');
   const hint=document.getElementById('pickHint');
   hint.classList.add('hidden');
-
-  if(gameState.phase==='lobby'){
-    btn.disabled=true;btn.textContent='⏳ Lobby...';
-  } else if(gameState.phase==='finished'){
-    btn.disabled=true;btn.textContent='🏆 Fine!';
-  } else if(!isMyTurn){
-    btn.disabled=true;btn.textContent='🎲 Lancia!';
-  } else if(!gameState.diceRolled){
-    btn.disabled=false;btn.textContent='🎲 Lancia!';
-  } else if(needsMove){
+  if(gameState.phase==='lobby'){btn.disabled=true;btn.textContent='⏳ Lobby...';}
+  else if(gameState.phase==='finished'){btn.disabled=true;btn.textContent='🏆 Fine!';}
+  else if(!isMyTurn){btn.disabled=true;btn.textContent='🎲 Lancia!';}
+  else if(!gameState.diceRolled){btn.disabled=false;btn.textContent='🎲 Lancia!';}
+  else if(needsMove){
     btn.disabled=true;btn.textContent='👆 Scegli!';
     hint.classList.remove('hidden');
     hint.innerHTML=`Hai fatto <strong>${gameState.diceValue}</strong><br>tocca la tua pedina`;
-  } else {
-    btn.disabled=true;btn.textContent='⏳ Attesa...';
-  }
+  } else {btn.disabled=true;btn.textContent='⏳ Attesa...';}
 
-  // Board vs waiting
   const board=document.getElementById('miniBoard');
   const wait=document.getElementById('waitBlock');
   if(gameState.phase==='lobby'){
     board.classList.add('hidden');wait.classList.remove('hidden');
     document.getElementById('waitName').textContent='Lobby';
-    document.getElementById('waitSub').textContent=`${gameState.players.length}/4 connessi`;
+    document.getElementById('waitSub').textContent=`${gameState.players.length}/6 connessi`;
   } else if(!isMyTurn){
     board.classList.add('hidden');wait.classList.remove('hidden');
     document.getElementById('waitName').textContent=cur?`${EMOJIS[cur.color]} ${cur.name}`:'...';
@@ -334,185 +365,214 @@ function render(){
     drawMiniBoard();
   }
 
-  // Log
-  document.getElementById('miniLog').innerHTML=(gameState.log||[]).slice(0,3)
+  document.getElementById('miniLog').innerHTML=(gameState.log||[]).slice(0,2)
     .map(e=>`<div class="mle">${esc(e)}</div>`).join('');
 }
 
-// ── Stars on six ─────────────────────────────────────────────────────────────
+// ── Stars on six ───────────────────────────────────────────────────────────────
 function spawnStars(){
   const face=document.getElementById('diceFace');
   const r=face.getBoundingClientRect();
-  const cx=r.left+r.width/2, cy=r.top+r.height/2;
-  for(let i=0;i<20;i++){
-    const a=Math.random()*Math.PI*2;
-    const spd=3+Math.random()*5;
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<22;i++){
+    const a=Math.random()*Math.PI*2;const spd=3+Math.random()*5;
     particles.push({x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-3,
-      life:1,decay:.025+Math.random()*.02,r:4+Math.random()*5,
-      color:['#ffd600','#ff9800','#fff','#ffff52'][Math.floor(Math.random()*4)]});
+      life:1,decay:.022+Math.random()*.018,r:14+Math.random()*8,
+      color:['#ffd600','#ff9100','#fff','#ffff52','#aa00ff'][Math.floor(Math.random()*5)]});
   }
 }
 
-// ── Dice dots ─────────────────────────────────────────────────────────────────
 const DP={1:[5],2:[1,9],3:[1,5,9],4:[1,3,7,9],5:[1,3,5,7,9],6:[1,3,4,6,7,9]};
 function setDots(v){clearDots();(DP[v]||[]).forEach(i=>{const d=document.getElementById(`d${i}`);d.classList.add('v');if(v===6)d.classList.add('r');});}
 function clearDots(){for(let i=1;i<=9;i++){const d=document.getElementById(`d${i}`);d.classList.remove('v','r');}}
 
-// ── Mini Board ────────────────────────────────────────────────────────────────
+// ── Mini Board ─────────────────────────────────────────────────────────────────
+let W=0;
 function setupBoard(){
   const col=document.getElementById('miniBoard').parentElement;
-  const size=Math.min(col.clientWidth||180,window.innerHeight*.4,240);
+  const size=Math.floor(Math.min(col.clientWidth||180,window.innerHeight*.35,220));
   const canvas=document.getElementById('miniBoard');
-  canvas.width=canvas.height=Math.floor(size);S=canvas.width/15;
+  canvas.width=canvas.height=size;S=size;W=size;
 }
 
-function homePos(color,i){
-  const b={red:[0,0],blue:[0,9],green:[9,9],yellow:[9,0]};
-  const[br,bc]=b[color];const cx=(bc+3)*S,cy=(br+3)*S;
-  const off=[[-1,-1],[1,-1],[-1,1],[1,1]];const[dr,dc]=off[i];
-  return{x:cx+dc*S*.85,y:cy+dr*S*.85};
+function hexPath(ctx,cx,cy,r,rotate=0){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const a=i*Math.PI/3+rotate;i===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+  ctx.closePath();
 }
 
-function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+function getTrackCellMini(i){
+  const arm=Math.floor(i/9);const pos=i%9;
+  const angle=arm*(Math.PI*2/6)-Math.PI/2;
+  const cx=W/2,cy=W/2;
+  const outerR=W*.415,innerR=W*.18;
+  const col=(pos%3)-1,row=Math.floor(pos/3);
+  const radial=outerR*(1-(row/2.5));
+  const perp=(W*.05)*col;
+  return{
+    x:cx+Math.cos(angle)*radial+Math.cos(angle+Math.PI/2)*perp,
+    y:cy+Math.sin(angle)*radial+Math.sin(angle+Math.PI/2)*perp
+  };
+}
+function getStretchCellMini(color,idx){
+  const arm=COLORS.indexOf(color);const angle=arm*(Math.PI*2/6)-Math.PI/2;
+  const cx=W/2,cy=W/2;const startR=W*.145,endR=W*.04;const t=idx/5;
+  return{x:cx+Math.cos(angle)*(startR*(1-t)+endR*t),y:cy+Math.sin(angle)*(startR*(1-t)+endR*t)};
+}
+function getBaseCenterMini(color){
+  const arm=COLORS.indexOf(color);const angle=arm*(Math.PI*2/6)-Math.PI/2;
+  return{x:W/2+Math.cos(angle)*W*.47,y:W/2+Math.sin(angle)*W*.47};
+}
+function getHolePosMini(color,i){
+  const base=getBaseCenterMini(color);
+  const arm=COLORS.indexOf(color);const angle=arm*(Math.PI*2/6)-Math.PI/2;
+  const dx=Math.cos(angle+Math.PI/2),dy=Math.sin(angle+Math.PI/2);
+  const ax=Math.cos(angle),ay=Math.sin(angle);
+  const cols=[-.5,.5],rows=[-.5,.5];
+  const col=cols[i%2],row=rows[Math.floor(i/2)];const spread=W*.04;
+  return{x:base.x+dx*col*spread+ax*row*spread,y:base.y+dy*col*spread+ay*row*spread};
+}
 
 function drawMiniBoard(){
   const canvas=document.getElementById('miniBoard');
-  if(!S||!gameState)return;
+  if(!W||!gameState)return;
   const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,W,W);
+  const cx=W/2,cy=W/2;
 
   // BG
-  ctx.fillStyle='#200a3a';rrect(ctx,0,0,S*15,S*15,14);ctx.fill();
+  hexPath(ctx,cx,cy,W*.5);
+  ctx.fillStyle='#120030';ctx.fill();
 
   // Bases
-  [{c:'red',r:0,col:0},{c:'blue',r:0,col:9},{c:'green',r:9,col:9},{c:'yellow',r:9,col:0}].forEach(({c,r,col})=>{
-    const x=col*S,y=r*S,sz=6*S;
-    ctx.fillStyle=CHX[c]+'22';rrect(ctx,x+1,y+1,sz-2,sz-2,10);ctx.fill();
-    ctx.strokeStyle=CHX[c]+'66';ctx.lineWidth=1.5;rrect(ctx,x+1,y+1,sz-2,sz-2,10);ctx.stroke();
-    const cx2=x+sz/2,cy2=y+sz/2;
-    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dr,dc])=>{
-      ctx.fillStyle='#0f0525';ctx.beginPath();ctx.arc(cx2+dc*S*.85,cy2+dr*S*.85,S*.27,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle=CHX[c]+'66';ctx.lineWidth=1;ctx.stroke();
-    });
+  COLORS.forEach(color=>{
+    const arm=COLORS.indexOf(color);const angle=arm*(Math.PI*2/6)-Math.PI/2;
+    const base=getBaseCenterMini(color);
+    const tipX=cx+Math.cos(angle)*W*.49,tipY=cy+Math.sin(angle)*W*.49;
+    const sR=W*.27;const sA1=angle+Math.PI/6*1.8,sA2=angle-Math.PI/6*1.8;
+    ctx.beginPath();ctx.moveTo(tipX,tipY);
+    ctx.lineTo(cx+Math.cos(sA1)*sR,cy+Math.sin(sA1)*sR);
+    ctx.lineTo(cx+Math.cos(sA2)*sR,cy+Math.sin(sA2)*sR);ctx.closePath();
+    ctx.fillStyle=CHX[color]+'33';ctx.fill();
+    ctx.strokeStyle=CHX[color]+'55';ctx.lineWidth=1;ctx.stroke();
+    for(let i=0;i<4;i++){
+      const h=getHolePosMini(color,i);
+      ctx.beginPath();ctx.arc(h.x,h.y,W*.023,0,Math.PI*2);
+      ctx.fillStyle='#050010';ctx.fill();ctx.strokeStyle=CHX[color]+'88';ctx.lineWidth=1;ctx.stroke();
+    }
   });
 
   // Track
-  TRACK.forEach((pos,i)=>{
-    const{r,c}=pos;
-    let fill='#2a0f48';
-    for(const[col,idxs]of Object.entries(SEG)){if(idxs.includes(i)){fill=CHX[col];break;}}
-    if(SAFE.includes(i))fill='#ffffff';
-    ctx.fillStyle=fill+'aa';rrect(ctx,c*S+1,r*S+1,S-2,S-2,4);ctx.fill();
-    if(SAFE.includes(i)){ctx.font=`${S*.38}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⭐',c*S+S/2,r*S+S/2);}
-  });
+  for(let i=0;i<TRACK_SIZE;i++){
+    const cell=getTrackCellMini(i);
+    const arm=Math.floor(i/9);const pos=i%9;const color=COLORS[arm];
+    const r=W*.019;
+    let fill=SAFE.includes(i)?'#ffffff':(pos<2?CHX[color]:'#2a0f48');
+    ctx.beginPath();ctx.arc(cell.x,cell.y,r,0,Math.PI*2);
+    ctx.fillStyle=fill+'bb';ctx.fill();
+    if(SAFE.includes(i)){ctx.font=`${r*1.3}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⭐',cell.x,cell.y);}
+  }
 
   // Stretches
-  Object.entries(STRETCH).forEach(([col,cells])=>{
-    cells.forEach(({r,c},i)=>{
+  COLORS.forEach(color=>{
+    for(let i=0;i<6;i++){
+      const cell=getStretchCellMini(color,i);const r=W*.015;
       const a=Math.round((0.18+i*.13)*255).toString(16).padStart(2,'0');
-      ctx.fillStyle=CHX[col]+a;rrect(ctx,c*S+1,r*S+1,S-2,S-2,4);ctx.fill();
-    });
+      ctx.beginPath();ctx.arc(cell.x,cell.y,r,0,Math.PI*2);
+      ctx.fillStyle=CHX[color]+a;ctx.fill();
+    }
   });
 
   // Center
-  const ccx=7.5*S,ccy=7.5*S;
-  [{c:'red',pts:[[1,7.5],[6,5],[6,10]]},{c:'blue',pts:[[7.5,1],[10,6],[5,6]]},
-   {c:'green',pts:[[14,7.5],[9,10],[9,5]]},{c:'yellow',pts:[[7.5,14],[5,9],[10,9]]}]
-  .forEach(({c,pts})=>{
-    ctx.beginPath();ctx.moveTo(pts[0][0]*S,pts[0][1]*S);ctx.lineTo(pts[1][0]*S,pts[1][1]*S);ctx.lineTo(pts[2][0]*S,pts[2][1]*S);ctx.closePath();
-    ctx.fillStyle=CHX[c]+'44';ctx.fill();
-  });
-  ctx.font=`${S*.7}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⭐',ccx,ccy);
+  hexPath(ctx,cx,cy,W*.07,Math.PI/6);
+  ctx.fillStyle='rgba(255,255,255,.08)';ctx.fill();
+  ctx.font=`${W*.055}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⭐',cx,cy);
 
   // Pieces
   const isMyTurn=gameState.currentTurn===myColor;
-  const map={};
-  ['red','blue','green','yellow'].forEach(color=>{
+  const posMap={};
+  COLORS.forEach(color=>{
     if(!gameState.pieces[color]||!gameState.players.find(p=>p.color===color))return;
     gameState.pieces[color].forEach((piece,i)=>{
       if(piece.finished)return;
-      let x,y,key;
-      if(piece.trackPos===-1){const p=homePos(color,i);x=p.x;y=p.y;key=`h_${color}_${i}`;}
-      else if(piece.homeStretchPos>=0){const cell=STRETCH[color][Math.min(piece.homeStretchPos,5)];if(!cell)return;x=cell.c*S+S/2;y=cell.r*S+S/2;key=`${cell.r}_${cell.c}`;}
-      else{const ti=(START[color]+piece.trackPos)%52;const cell=TRACK[ti];if(!cell)return;x=cell.c*S+S/2;y=cell.r*S+S/2;key=`${cell.r}_${cell.c}`;}
-      if(!map[key])map[key]=[];map[key].push({color,piece,x,y});
+      let x,y;
+      if(piece.trackPos===-1){const h=getHolePosMini(color,i);x=h.x;y=h.y;}
+      else if(piece.homeStretchPos>=0){const c=getStretchCellMini(color,Math.min(piece.homeStretchPos,5));x=c.x;y=c.y;}
+      else{const c=getTrackCellMini((START[color]+piece.trackPos)%TRACK_SIZE);x=c.x;y=c.y;}
+      const key=`${Math.round(x)}_${Math.round(y)}`;
+      if(!posMap[key])posMap[key]=[];
+      posMap[key].push({color,piece,x,y});
     });
   });
-  Object.values(map).forEach(items=>{
+  Object.values(posMap).forEach(items=>{
     const n=items.length;
     items.forEach(({color,piece,x,y},idx)=>{
       let px=x,py=y;
-      if(n>1){const a=(idx/n)*Math.PI*2-Math.PI/2;px+=Math.cos(a)*S*.17;py+=Math.sin(a)*S*.17;}
+      if(n>1){const a=(idx/n)*Math.PI*2-Math.PI/2;px+=Math.cos(a)*W*.016;py+=Math.sin(a)*W*.016;}
       const movable=isMyTurn&&gameState.diceRolled&&color===myColor&&gameState.movablePieces.includes(piece.id);
       const dimmed=isMyTurn&&gameState.diceRolled&&gameState.movablePieces.length>0&&!movable;
-      const r=color===myColor?S*.32:S*.24;
-      drawPiece(ctx,color,px,py,r,movable,dimmed);
+      const r=color===myColor?W*.028:W*.021;
+      ctx.globalAlpha=dimmed?.3:1;
+      if(movable){
+        const t=(Date.now()/500)%1;
+        ctx.beginPath();ctx.arc(px,py,r+2+t*3,0,Math.PI*2);
+        ctx.strokeStyle=CHX[color]+Math.round((1-t)*200).toString(16).padStart(2,'0');
+        ctx.lineWidth=2;ctx.stroke();ctx.shadowColor=CHX[color];ctx.shadowBlur=8;
+      }
+      const g=ctx.createRadialGradient(px-r*.25,py-r*.28,r*.05,px+r*.05,py+r*.05,r*1.1);
+      g.addColorStop(0,CHL[color]);g.addColorStop(.5,CHX[color]);g.addColorStop(1,CHD[color]);
+      ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+      ctx.strokeStyle=movable?'rgba(255,255,255,.9)':'rgba(255,255,255,.25)';ctx.lineWidth=movable?1.5:1;ctx.stroke();
+      ctx.shadowBlur=0;ctx.shadowColor='transparent';ctx.globalAlpha=1;
     });
   });
 }
 
-function drawPiece(ctx,color,x,y,r,movable,dimmed){
-  ctx.globalAlpha=dimmed?.3:1;
-  if(movable){
-    const t=(Date.now()/500)%1;
-    ctx.beginPath();ctx.arc(x,y,r+3+t*4,0,Math.PI*2);
-    ctx.strokeStyle=CHX[color]+Math.round((1-t)*200).toString(16).padStart(2,'0');
-    ctx.lineWidth=2.5;ctx.stroke();
-    ctx.beginPath();ctx.arc(x,y,r+1+(1-t)*4,0,Math.PI*2);
-    ctx.strokeStyle=CHX[color]+Math.round(t*100).toString(16).padStart(2,'0');
-    ctx.lineWidth=1.5;ctx.stroke();
-    ctx.shadowColor=CHX[color];ctx.shadowBlur=10;
-  }
-  const g=ctx.createRadialGradient(x-r*.25,y-r*.28,r*.05,x+r*.05,y+r*.05,r*1.1);
-  g.addColorStop(0,CHL[color]);g.addColorStop(.5,CHX[color]);g.addColorStop(1,CHD[color]);
-  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-  ctx.strokeStyle=movable?'rgba(255,255,255,.95)':'rgba(255,255,255,.28)';ctx.lineWidth=movable?2:1;ctx.stroke();
-  const sh=ctx.createRadialGradient(x-r*.28,y-r*.32,0,x-r*.28,y-r*.32,r*.55);
-  sh.addColorStop(0,'rgba(255,255,255,.5)');sh.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=sh;ctx.fill();
-  ctx.shadowBlur=0;ctx.shadowColor='transparent';ctx.globalAlpha=1;
-}
-
-// ── Touch on board ────────────────────────────────────────────────────────────
+// ── Touch board ────────────────────────────────────────────────────────────────
 document.getElementById('miniBoard').addEventListener('click',e=>{
-  if(!gameState||gameState.phase!=='playing'||gameState.currentTurn!==myColor) return;
-  if(!gameState.diceRolled||!gameState.movablePieces.length) return;
+  if(!gameState||gameState.phase!=='playing'||gameState.currentTurn!==myColor)return;
+  if(!gameState.diceRolled||!gameState.movablePieces.length)return;
   const canvas=document.getElementById('miniBoard');
   const rect=canvas.getBoundingClientRect();
   const mx=(e.clientX-rect.left)*(canvas.width/rect.width);
   const my=(e.clientY-rect.top)*(canvas.height/rect.height);
-  let best=null,bestD=S*.6;
+  let best=null,bestD=W*.07;
   for(const pid of gameState.movablePieces){
     const piece=gameState.pieces[myColor].find(p=>p.id===pid);if(!piece)continue;
     let px,py;
-    if(piece.trackPos===-1){const p=homePos(myColor,pid);px=p.x;py=p.y;}
-    else if(piece.homeStretchPos>=0){const cell=STRETCH[myColor][Math.min(piece.homeStretchPos,5)];if(!cell)continue;px=cell.c*S+S/2;py=cell.r*S+S/2;}
-    else{const ti=(START[myColor]+piece.trackPos)%52;const cell=TRACK[ti];if(!cell)continue;px=cell.c*S+S/2;py=cell.r*S+S/2;}
+    if(piece.trackPos===-1){const h=getHolePosMini(myColor,pid);px=h.x;py=h.y;}
+    else if(piece.homeStretchPos>=0){const c=getStretchCellMini(myColor,Math.min(piece.homeStretchPos,5));px=c.x;py=c.y;}
+    else{const c=getTrackCellMini((START[myColor]+piece.trackPos)%TRACK_SIZE);px=c.x;py=c.y;}
     const d=Math.hypot(mx-px,my-py);if(d<bestD){bestD=d;best=pid;}
   }
-  if(best!==null) send({type:'move',pieceId:best});
+  if(best!==null)send({type:'move',pieceId:best});
 });
 
-// ── Particle canvas loop ──────────────────────────────────────────────────────
+// ── Particle loop ──────────────────────────────────────────────────────────────
 function loopParticles(){
   const pc=document.getElementById('pCanvas');
-  pc.width=window.innerWidth;pc.height=window.innerHeight;
-  const ctx=pc.getContext('2d');
-  ctx.clearRect(0,0,pc.width,pc.height);
+  pc.width=innerWidth;pc.height=innerHeight;
+  const ctx=pc.getContext('2d');ctx.clearRect(0,0,pc.width,pc.height);
   particles=particles.filter(p=>p.life>0);
   particles.forEach(p=>{
     p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.life-=p.decay;
-    ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
-    ctx.font=`${p.r*2}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText('✨',p.x,p.y);
+    ctx.globalAlpha=Math.max(0,p.life);
+    if(p.emoji){
+      ctx.font=`${p.r}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(p.emoji,p.x,p.y);
+    } else {
+      ctx.fillStyle=p.color||'#ffd600';
+      ctx.font=`${p.r}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('✨',p.x,p.y);
+    }
     ctx.globalAlpha=1;
   });
 }
 
-// ── Main loop ─────────────────────────────────────────────────────────────────
+// ── Main loop ──────────────────────────────────────────────────────────────────
 function loop(){
   if(gameState?.phase==='playing'&&gameState?.currentTurn===myColor){
-    if(gameState.movablePieces.length||gameState.diceRolled) drawMiniBoard();
+    if(gameState.movablePieces.length||gameState.diceRolled)drawMiniBoard();
   }
   loopParticles();
   requestAnimationFrame(loop);

@@ -1,14 +1,11 @@
 {
-  "name": "ludo-king",
-  "version": "1.0.0",
-  "description": "",
+  "name": "ludo-king-6",
+  "version": "2.0.0",
+  "description": "Ludo King per 2-6 giocatori su scacchiera esagonale",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^5.2.1",

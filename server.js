@@ -11,10 +11,17 @@ const wss = new WebSocket.Server({ server });
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/player', (req, res) => res.sendFile(path.join(__dirname, 'public', 'player.html')));
 
-const COLORS = ['red', 'blue', 'green', 'yellow'];
-const START_CELLS = { red: 0, blue: 13, green: 26, yellow: 39 };
-const HOME_ENTRY  = { red: 50, blue: 11, green: 24, yellow: 37 };
-const SAFE_CELLS  = [0, 8, 13, 21, 26, 34, 39, 47];
+// 6 colors for hexagonal board
+const COLORS = ['red', 'blue', 'green', 'yellow', 'orange', 'purple'];
+
+// Each player has a start cell on the shared 6-arm track.
+// The hex board has 6 arms of 9 cells each = 54 total track cells.
+// Start positions (absolute track index, the first colored cell of each arm)
+const START_CELLS = { red: 0, blue: 9, green: 18, yellow: 27, orange: 36, purple: 45 };
+// Home entry = the cell just before entering the home stretch (last colored arm cell)
+const HOME_ENTRY  = { red: 53, blue: 8, green: 17, yellow: 26, orange: 35, purple: 44 };
+// Safe cells: starts + star cells
+const SAFE_CELLS  = [0, 4, 9, 13, 18, 22, 27, 31, 36, 40, 45, 49];
 
 let gameState = createInitialState();
 let clients = new Map();
@@ -31,7 +38,8 @@ function createInitialState() {
     winner: null,
     consecutiveSixes: 0,
     log: [],
-    seq: 0
+    seq: 0,
+    reactions: [] // {id, color, emoji, name, ts}
   };
 }
 
@@ -65,12 +73,14 @@ function nextTurn() {
 
 function getMovablePieces(color, dice) {
   const movable = [];
+  const TRACK_SIZE = 54;
   gameState.pieces[color].forEach(piece => {
     if (piece.finished) return;
     if (piece.trackPos === -1) { if (dice === 6) movable.push(piece.id); return; }
     if (piece.homeStretchPos >= 0) { if (piece.homeStretchPos + dice <= 5) movable.push(piece.id); return; }
-    const curAbs = (START_CELLS[color] + piece.trackPos) % 52;
-    const stepsToEntry = (HOME_ENTRY[color] - curAbs + 52) % 52 || 52;
+    const curAbs = (START_CELLS[color] + piece.trackPos) % TRACK_SIZE;
+    const entryAbs = HOME_ENTRY[color];
+    const stepsToEntry = (entryAbs - curAbs + TRACK_SIZE) % TRACK_SIZE || TRACK_SIZE;
     if (dice <= stepsToEntry) { movable.push(piece.id); }
     else { if (dice - stepsToEntry <= 6) movable.push(piece.id); }
   });
@@ -80,6 +90,7 @@ function getMovablePieces(color, dice) {
 function movePiece(color, pieceId) {
   const piece = gameState.pieces[color].find(p => p.id === pieceId);
   const dice = gameState.diceValue;
+  const TRACK_SIZE = 54;
   let captured = false;
 
   if (piece.trackPos === -1) {
@@ -95,8 +106,9 @@ function movePiece(color, pieceId) {
     return false;
   }
 
-  const curAbs = (START_CELLS[color] + piece.trackPos) % 52;
-  const stepsToEntry = (HOME_ENTRY[color] - curAbs + 52) % 52 || 52;
+  const curAbs = (START_CELLS[color] + piece.trackPos) % TRACK_SIZE;
+  const entryAbs = HOME_ENTRY[color];
+  const stepsToEntry = (entryAbs - curAbs + TRACK_SIZE) % TRACK_SIZE || TRACK_SIZE;
 
   if (dice < stepsToEntry) {
     piece.trackPos += dice;
@@ -112,14 +124,15 @@ function movePiece(color, pieceId) {
 
 function checkCapture(attColor, piece) {
   if (piece.trackPos === -2 || piece.trackPos < 0) return false;
-  const absPos = (START_CELLS[attColor] + piece.trackPos) % 52;
+  const TRACK_SIZE = 54;
+  const absPos = (START_CELLS[attColor] + piece.trackPos) % TRACK_SIZE;
   if (SAFE_CELLS.includes(absPos)) return false;
   let captured = false;
   COLORS.forEach(color => {
     if (color === attColor || !gameState.players.find(p => p.color === color)) return;
     gameState.pieces[color].forEach(t => {
       if (!t.finished && t.trackPos >= 0 && t.homeStretchPos < 0) {
-        if ((START_CELLS[color] + t.trackPos) % 52 === absPos) {
+        if ((START_CELLS[color] + t.trackPos) % TRACK_SIZE === absPos) {
           t.trackPos = -1; t.homeStretchPos = -1; captured = true;
           addLog(`💥 ${emoji(attColor)} cattura pedina di ${color}!`);
         }
@@ -134,7 +147,7 @@ function checkWinner() {
   if (w) { gameState.winner = w.color; gameState.phase = 'finished'; addLog(`🎉 ${w.name} ha vinto!`); }
 }
 
-function emoji(c) { return {red:'🔴',blue:'🔵',green:'🟢',yellow:'🟡'}[c]||''; }
+function emoji(c) { return {red:'🔴',blue:'🔵',green:'🟢',yellow:'🟡',orange:'🟠',purple:'🟣'}[c]||''; }
 
 function broadcast(msg) {
   gameState.seq++;
@@ -163,7 +176,7 @@ wss.on('connection', (ws) => {
 
       case 'join': {
         if (gameState.phase !== 'lobby') { sendTo(ws, { type: 'error', message: 'Partita già iniziata' }); return; }
-        if (gameState.players.length >= 4) { sendTo(ws, { type: 'error', message: 'Lobby piena' }); return; }
+        if (gameState.players.length >= 6) { sendTo(ws, { type: 'error', message: 'Lobby piena' }); return; }
         const taken = gameState.players.map(p => p.color);
         const color = COLORS.find(c => !taken.includes(c));
         if (!color) return;
@@ -242,6 +255,24 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      case 'reaction': {
+        if (!client.color || !msg.emoji) return;
+        // Validate emoji is in allowed set
+        const ALLOWED = ['😂','🔥','💀','😤','👑','🎉','🤬','😭','🫡','🤡','💪','🙈'];
+        if (!ALLOWED.includes(msg.emoji)) return;
+        const reaction = {
+          id: uuidv4(),
+          color: client.color,
+          name: client.name,
+          emoji: msg.emoji,
+          ts: Date.now()
+        };
+        gameState.reactions = gameState.reactions.filter(r => Date.now() - r.ts < 4000);
+        gameState.reactions.push(reaction);
+        broadcast({ type: 'reaction', reaction });
+        break;
+      }
+
       case 'restart': {
         if (gameState.phase !== 'finished') return;
         const old = gameState.players.map(p => ({...p}));
@@ -280,7 +311,7 @@ wss.on('connection', (ws) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🎲 Ludo King`);
+  console.log(`\n🎲 Ludo King 6`);
   console.log(`📺 Display (scacchiera): http://localhost:${PORT}/`);
   console.log(`📱 Giocatori (dado):     http://localhost:${PORT}/player`);
   console.log(`\n🌐 Su rete locale sostituisci localhost con il tuo IP\n`);

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ludo-king
+    name: ludo-king-6
     runtime: node
     buildCommand: npm install
     startCommand: npm start
