@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎲 Ludo King</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e63946; --red-light: #ff6b7a; --red-dark: #b71c1c;
+    --blue: #1d6fa5; --blue-light: #4fc3f7; --blue-dark: #0d47a1;
+    --green: #2a9d56; --green-light: #66bb6a; --green-dark: #1b5e20;
+    --yellow: #e9c46a; --yellow-light: #fff176; --yellow-dark: #f57f17;
+    --bg: #0f0e17;
+    --surface: #1a1928;
+    --surface2: #242336;
+    --text: #fffffe;
+    --text-dim: #a7a9be;
+    --border: #2e2d44;
+    --glow: 0 0 20px rgba(255,255,255,0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(ellipse at 20% 20%, rgba(100,60,180,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(30,100,180,0.12) 0%, transparent 60%);
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── JOIN SCREEN ── */
+  #joinScreen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 40px 20px;
+  }
+  .logo {
+    text-align: center;
+  }
+  .logo h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(3rem, 8vw, 5rem);
+    background: linear-gradient(135deg, #f72585, #7209b7, #3a86ff, #06d6a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 30px rgba(114,9,183,0.5));
+    line-height: 1;
+  }
+  .logo p { color: var(--text-dim); font-size: 1.1rem; margin-top: 8px; }
+
+  .join-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .join-card h2 { font-family: 'Fredoka One', cursive; font-size: 1.6rem; margin-bottom: 24px; text-align: center; }
+
+  .input-group { margin-bottom: 20px; }
+  .input-group label { display: block; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 8px; }
+  .input-group input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: border-color 0.2s;
+  }
+  .input-group input:focus { outline: none; border-color: #7209b7; }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: linear-gradient(135deg, #7209b7, #3a86ff); color: white; }
+  .btn-danger { background: linear-gradient(135deg, #e63946, #c1121f); color: white; }
+  .btn-success { background: linear-gradient(135deg, #2a9d56, #06d6a0); color: white; }
+  .btn-sm { padding: 10px 20px; font-size: 1rem; width: auto; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── LOBBY SCREEN ── */
+  #lobbyScreen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 24px;
+  }
+  .lobby-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px;
+    width: 100%;
+    max-width: 480px;
+  }
+  .lobby-card h2 { font-family: 'Fredoka One', cursive; font-size: 1.8rem; text-align: center; margin-bottom: 8px; }
+  .lobby-subtitle { color: var(--text-dim); text-align: center; margin-bottom: 28px; font-size: 0.95rem; }
+
+  .player-slots { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+  .player-slot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 2px solid var(--border);
+    transition: all 0.3s;
+  }
+  .player-slot.filled { border-color: rgba(255,255,255,0.2); }
+  .player-slot.me { border-width: 2px; box-shadow: 0 0 20px rgba(255,255,255,0.1); }
+  .slot-color { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+  .slot-color.red { background: radial-gradient(circle at 35% 35%, var(--red-light), var(--red-dark)); box-shadow: 0 0 12px var(--red); }
+  .slot-color.blue { background: radial-gradient(circle at 35% 35%, var(--blue-light), var(--blue-dark)); box-shadow: 0 0 12px var(--blue); }
+  .slot-color.green { background: radial-gradient(circle at 35% 35%, var(--green-light), var(--green-dark)); box-shadow: 0 0 12px var(--green); }
+  .slot-color.yellow { background: radial-gradient(circle at 35% 35%, var(--yellow-light), var(--yellow-dark)); box-shadow: 0 0 12px var(--yellow); }
+  .slot-info { flex: 1; }
+  .slot-name { font-weight: 800; font-size: 1rem; }
+  .slot-tag { font-size: 0.78rem; color: var(--text-dim); }
+  .slot-empty { color: var(--text-dim); font-style: italic; }
+
+  /* ── GAME SCREEN ── */
+  #gameScreen {
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    gap: 16px;
+    min-height: 100vh;
+  }
+
+  .game-header {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .game-header h2 { font-family: 'Fredoka One', cursive; font-size: 1.6rem; }
+
+  .turn-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    transition: all 0.4s;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .turn-dot { width: 14px; height: 14px; border-radius: 50%; }
+
+  .game-main {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ── BOARD ── */
+  .board-wrap {
+    flex: 1;
+    min-width: 320px;
+    max-width: 600px;
+    aspect-ratio: 1;
+    position: relative;
+  }
+
+  #boardCanvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    box-shadow: 0 0 60px rgba(114,9,183,0.3), 0 20px 40px rgba(0,0,0,0.5);
+    cursor: pointer;
+  }
+
+  /* ── SIDE PANEL ── */
+  .side-panel {
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .panel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .panel-card h3 { font-family: 'Fredoka One', cursive; font-size: 1.1rem; margin-bottom: 12px; color: var(--text-dim); }
+
+  /* ── DICE ── */
+  .dice-area { text-align: center; }
+  .dice-face {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    background: white;
+    color: #111;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 4px;
+    padding: 10px;
+    margin: 0 auto 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.8);
+    transition: transform 0.15s;
+    position: relative;
+  }
+  .dice-face.rolling { animation: diceRoll 0.4s ease; }
+  @keyframes diceRoll {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(15deg) scale(1.1); }
+    50% { transform: rotate(-10deg) scale(0.9); }
+    75% { transform: rotate(8deg) scale(1.05); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+  .dot {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #222;
+    display: none;
+  }
+  .dot.visible { display: block; }
+  .dot.red-dot { background: var(--red); }
+
+  .btn-roll {
+    background: linear-gradient(135deg, #f72585, #7209b7);
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(247,37,133,0.4);
+  }
+  .btn-roll:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,37,133,0.6); }
+  .btn-roll:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  /* ── PLAYERS LIST ── */
+  .player-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    transition: background 0.2s;
+    margin-bottom: 6px;
+  }
+  .player-item.active-turn { background: rgba(255,255,255,0.07); }
+  .player-item .pip { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .player-item .pname { font-weight: 700; font-size: 0.9rem; flex: 1; }
+  .player-item .pscore { font-size: 0.8rem; color: var(--text-dim); }
+  .player-item .turn-arrow { font-size: 1.1rem; }
+
+  /* ── LOG ── */
+  .log-list { max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .log-entry { font-size: 0.82rem; color: var(--text-dim); padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .log-entry:first-child { color: var(--text); font-weight: 600; }
+
+  /* ── WINNER OVERLAY ── */
+  #winnerOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    backdrop-filter: blur(8px);
+  }
+  #winnerOverlay.show { display: flex; }
+  .winner-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 48px;
+    text-align: center;
+    max-width: 400px;
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .winner-emoji { font-size: 4rem; margin-bottom: 16px; }
+  .winner-card h2 { font-family: 'Fredoka One', cursive; font-size: 2.2rem; margin-bottom: 8px; }
+  .winner-card p { color: var(--text-dim); margin-bottom: 28px; }
+  .winner-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  .my-turn-flash {
+    animation: flashBorder 0.8s ease infinite alternate;
+  }
+  @keyframes flashBorder {
+    from { box-shadow: 0 0 60px rgba(247,37,133,0.1), 0 20px 40px rgba(0,0,0,0.5); }
+    to   { box-shadow: 0 0 60px rgba(247,37,133,0.5), 0 20px 40px rgba(0,0,0,0.5); }
+  }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #2a9d56;
+    display: inline-block;
+    margin-right: 6px;
+    box-shadow: 0 0 6px #2a9d56;
+  }
+  .status-dot.disconnected { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+  @media (max-width: 680px) {
+    .side-panel { width: 100%; max-width: 600px; }
+    .game-main { flex-direction: column; }
+    .board-wrap { max-width: 100%; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- JOIN SCREEN -->
+<div id="joinScreen" class="screen active">
+  <div class="logo">
+    <h1>🎲 Ludo King</h1>
+    <p>Il classico gioco da tavolo, online con gli amici</p>
+  </div>
+  <div class="join-card">
+    <h2>Entra nella Partita</h2>
+    <div class="input-group">
+      <label>Il tuo nome</label>
+      <input type="text" id="nameInput" placeholder="Es: Marco" maxlength="16" />
+    </div>
+    <div class="input-group">
+      <label>Server IP</label>
+      <input type="text" id="serverInput" placeholder="192.168.x.x:3000" />
+    </div>
+    <button class="btn btn-primary" onclick="connect()">Connettiti 🚀</button>
+    <p id="joinError" style="color:var(--red);margin-top:12px;font-size:0.9rem;text-align:center;"></p>
+  </div>
+</div>
+
+<!-- LOBBY SCREEN -->
+<div id="lobbyScreen" class="screen">
+  <div class="lobby-card">
+    <h2>🎮 Lobby</h2>
+    <p class="lobby-subtitle">Aspettate che tutti i giocatori si connettano</p>
+    <div class="player-slots" id="playerSlots"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-success" id="startBtn" onclick="startGame()" disabled>Inizia Partita ▶</button>
+      <button class="btn btn-danger btn-sm" onclick="resetLobby()">Reset</button>
+    </div>
+    <p id="lobbyMsg" style="color:var(--text-dim);margin-top:12px;font-size:0.85rem;"></p>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <div class="game-header">
+    <h2>🎲 Ludo King</h2>
+    <div class="turn-banner" id="turnBanner">
+      <div class="turn-dot" id="turnDot"></div>
+      <span id="turnText">Turno di...</span>
+    </div>
+  </div>
+
+  <div class="game-main">
+    <div class="board-wrap" id="boardWrap">
+      <canvas id="boardCanvas" width="600" height="600"></canvas>
+    </div>
+
+    <div class="side-panel">
+      <!-- Dice -->
+      <div class="panel-card dice-area">
+        <h3>🎲 Dado</h3>
+        <div class="dice-face" id="diceFace">
+          <div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+          <div class="dot" id="d4"></div><div class="dot" id="d5"></div><div class="dot" id="d6"></div>
+          <div class="dot" id="d7"></div><div class="dot" id="d8"></div><div class="dot" id="d9"></div>
+        </div>
+        <button class="btn-roll" id="rollBtn" onclick="rollDice()" disabled>Lancia il Dado</button>
+        <p id="diceMsg" style="color:var(--text-dim);font-size:0.85rem;margin-top:10px;text-align:center;"></p>
+      </div>
+
+      <!-- Players -->
+      <div class="panel-card">
+        <h3>👥 Giocatori</h3>
+        <div id="playersList"></div>
+      </div>
+
+      <!-- Log -->
+      <div class="panel-card">
+        <h3>📜 Registro</h3>
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Winner Overlay -->
+<div id="winnerOverlay">
+  <div class="winner-card">
+    <div class="winner-emoji" id="winnerEmoji">🏆</div>
+    <h2 id="winnerTitle">Vittoria!</h2>
+    <p id="winnerSub">Ha vinto la partita!</p>
+    <div class="winner-btns">
+      <button class="btn btn-success btn-sm" onclick="restartGame()">Rivincita 🔄</button>
+      <button class="btn btn-danger btn-sm" onclick="resetAll()">Lobby 🏠</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let ws = null;
+let myId = null;
+let myColor = null;
+let myName = null;
+let gameState = null;
+let selectedPiece = null;
+
+// ── Connection ───────────────────────────────────────────────────────────────
+function connect() {
+  const name = document.getElementById('nameInput').value.trim() || 'Giocatore';
+  const server = document.getElementById('serverInput').value.trim();
+  if (!server) { showJoinError('Inserisci l\'IP del server'); return; }
+  
+  const wsUrl = server.startsWith('ws') ? server : `ws://${server}`;
+  
+  try {
+    ws = new WebSocket(wsUrl);
+  } catch(e) { showJoinError('URL non valido'); return; }
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'join', name }));
+    myName = name;
+  };
+
+  ws.onerror = () => showJoinError('Connessione fallita. Controlla l\'IP.');
+  ws.onclose = () => { if (gameState?.phase === 'playing') showJoinError('Disconnesso dal server'); };
+  ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+}
+
+function handleMessage(msg) {
+  switch(msg.type) {
+    case 'connected':
+      myId = msg.id;
+      if (msg.state) updateState(msg.state);
+      break;
+    case 'joined':
+      myColor = msg.color;
+      myName = msg.name;
+      break;
+    case 'state':
+      updateState(msg.state);
+      break;
+    case 'error':
+      showJoinError(msg.message);
+      break;
+  }
+}
+
+function updateState(state) {
+  gameState = state;
+  selectedPiece = null;
+
+  if (state.phase === 'lobby') {
+    showScreen('lobbyScreen');
+    renderLobby();
+  } else if (state.phase === 'playing') {
+    showScreen('gameScreen');
+    renderGame();
+  } else if (state.phase === 'finished') {
+    showScreen('gameScreen');
+    renderGame();
+    showWinner();
+  }
+}
+
+// ── Screens ──────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showJoinError(msg) {
+  document.getElementById('joinError').textContent = msg;
+}
+
+// ── Lobby ────────────────────────────────────────────────────────────────────
+function renderLobby() {
+  const slots = document.getElementById('playerSlots');
+  const colors = ['red','blue','green','yellow'];
+  const colorNames = { red:'Rosso 🔴', blue:'Blu 🔵', green:'Verde 🟢', yellow:'Giallo 🟡' };
+
+  slots.innerHTML = colors.map(color => {
+    const player = gameState.players.find(p => p.color === color);
+    const isMe = player && player.id === myId;
+    return `<div class="player-slot ${player ? 'filled' : ''} ${isMe ? 'me' : ''}" 
+                 style="${player ? `border-color:var(--${color})` : ''}">
+      <div class="slot-color ${color}"></div>
+      <div class="slot-info">
+        ${player 
+          ? `<div class="slot-name">${escHtml(player.name)} ${isMe ? '(tu)' : ''}</div>
+             <div class="slot-tag">${colorNames[color]}</div>`
+          : `<div class="slot-empty">In attesa...</div><div class="slot-tag">${colorNames[color]}</div>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+
+  const startBtn = document.getElementById('startBtn');
+  const isHost = gameState.players.length > 0 && gameState.players[0].id === myId;
+  startBtn.disabled = !isHost || gameState.players.length < 1;
+  
+  document.getElementById('lobbyMsg').textContent = isHost 
+    ? `Sei il host. ${gameState.players.length}/4 giocatori connessi.`
+    : `${gameState.players.length}/4 giocatori. Aspettando l'host...`;
+}
+
+function startGame() {
+  ws?.send(JSON.stringify({ type: 'start' }));
+}
+function resetLobby() {
+  ws?.send(JSON.stringify({ type: 'reset' }));
+}
+
+// ── Game ─────────────────────────────────────────────────────────────────────
+function renderGame() {
+  renderBoard();
+  renderTurnBanner();
+  renderPlayersList();
+  renderLog();
+  renderDice();
+}
+
+function renderTurnBanner() {
+  const banner = document.getElementById('turnBanner');
+  const dot = document.getElementById('turnDot');
+  const text = document.getElementById('turnText');
+  const color = gameState.currentTurn;
+  if (!color) return;
+
+  const player = gameState.players.find(p => p.color === color);
+  const name = player ? player.name : color;
+  const isMe = color === myColor;
+
+  dot.style.background = `var(--${color})`;
+  dot.style.boxShadow = `0 0 8px var(--${color})`;
+  text.textContent = isMe ? `Tocca a te!` : `Turno di ${name}`;
+  banner.style.borderColor = `var(--${color})`;
+
+  const boardWrap = document.getElementById('boardWrap');
+  if (isMe && !gameState.diceRolled) {
+    boardWrap.classList.add('my-turn-flash');
+  } else {
+    boardWrap.classList.remove('my-turn-flash');
+  }
+}
+
+function renderPlayersList() {
+  const list = document.getElementById('playersList');
+  list.innerHTML = gameState.players.map(p => {
+    const finished = isPlayerFinished(p.color);
+    const isActive = gameState.currentTurn === p.color;
+    const finishedCount = gameState.pieces[p.color].filter(pc => pc.finished).length;
+    return `<div class="player-item ${isActive ? 'active-turn' : ''}">
+      <span class="status-dot ${p.connected ? '' : 'disconnected'}"></span>
+      <div class="pip" style="background:var(--${p.color});box-shadow:0 0 6px var(--${p.color})"></div>
+      <span class="pname">${escHtml(p.name)} ${p.id === myId ? '<em style="color:var(--text-dim);font-style:normal;font-size:0.75rem">(tu)</em>' : ''}</span>
+      <span class="pscore">${finishedCount}/4 🏠</span>
+      ${isActive ? '<span class="turn-arrow">▶</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderLog() {
+  const log = document.getElementById('logList');
+  log.innerHTML = (gameState.log || []).slice(0, 20).map(entry => 
+    `<div class="log-entry">${escHtml(entry)}</div>`
+  ).join('');
+}
+
+function renderDice() {
+  const rollBtn = document.getElementById('rollBtn');
+  const diceMsg = document.getElementById('diceMsg');
+  const isMyTurn = gameState.currentTurn === myColor;
+
+  rollBtn.disabled = !isMyTurn || gameState.diceRolled || gameState.phase !== 'playing';
+
+  if (gameState.diceValue) {
+    updateDiceFace(gameState.diceValue, isMyTurn && gameState.diceRolled);
+  } else {
+    updateDiceFace(null);
+  }
+
+  if (!isMyTurn) {
+    const player = gameState.players.find(p => p.color === gameState.currentTurn);
+    diceMsg.textContent = `Aspettando ${player?.name || '...'}`;
+  } else if (!gameState.diceRolled) {
+    diceMsg.textContent = 'È il tuo turno! Lancia!';
+  } else if (gameState.movablePieces.length > 0) {
+    diceMsg.textContent = 'Clicca una pedina evidenziata';
+  } else {
+    diceMsg.textContent = '';
+  }
+}
+
+function updateDiceFace(value, animate) {
+  const face = document.getElementById('diceFace');
+  const DOT_PATTERNS = {
+    null: [],
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+
+  if (animate) {
+    face.classList.remove('rolling');
+    void face.offsetWidth;
+    face.classList.add('rolling');
+    setTimeout(() => face.classList.remove('rolling'), 400);
+  }
+
+  const active = DOT_PATTERNS[value] || [];
+  for (let i = 1; i <= 9; i++) {
+    const dot = document.getElementById(`d${i}`);
+    if (active.includes(i)) {
+      dot.classList.add('visible');
+      dot.classList.toggle('red-dot', value === 6);
+    } else {
+      dot.classList.remove('visible', 'red-dot');
+    }
+  }
+}
+
+function rollDice() {
+  if (!ws || gameState.currentTurn !== myColor || gameState.diceRolled) return;
+  ws.send(JSON.stringify({ type: 'roll' }));
+}
+
+// ── Board Canvas ─────────────────────────────────────────────────────────────
+const COLORS_LIST = ['red','blue','green','yellow'];
+const COLOR_HEX = { red:'#e63946', blue:'#1d6fa5', green:'#2a9d56', yellow:'#e9c46a' };
+const COLOR_LIGHT = { red:'#ff6b7a', blue:'#4fc3f7', green:'#66bb6a', yellow:'#fff176' };
+
+// Board layout: 15x15 grid
+// Main track cell mapping (52 cells, 0 = red start, going clockwise)
+function buildTrackMap() {
+  // Returns array of {row, col} for each of the 52 main track cells
+  const track = [];
+  // Top-left arm going right (row 6, col 0-5) → red
+  for (let c = 0; c <= 5; c++) track.push({r:6,c});            // 0-5 (red segment)
+  // Going up (col 6, row 5-0)
+  for (let r = 5; r >= 0; r--) track.push({r,c:6});            // 6-11 (up col)
+  // Going right (row 0, col 7-8)
+  track.push({r:0,c:7}); track.push({r:0,c:8});                // 12-13 blue start col
+  // Going down (col 8, row 1-5)
+  for (let r = 1; r <= 5; r++) track.push({r,c:8});            // 14-18
+  // Going right (row 6, col 9-14)
+  for (let c = 9; c <= 14; c++) track.push({r:6,c});           // 19-24 (blue segment)
+  // Going down (col 14, row 7-8)
+  track.push({r:7,c:14}); track.push({r:8,c:14});              // 25-26 green start row
+  // Going left (row 8, col 13-9)
+  for (let c = 13; c >= 9; c--) track.push({r:8,c});           // 27-31
+  // Going down (col 8, row 9-14)
+  for (let r = 9; r <= 14; r++) track.push({r,c:8});           // 32-37 (green segment)
+  // Going left (row 14, col 7-6)
+  track.push({r:14,c:7}); track.push({r:14,c:6});              // 38-39 yellow start col
+  // Going up (col 6, row 13-9)
+  for (let r = 13; r >= 9; r--) track.push({r,c:6});           // 40-44
+  // Going left (row 8, col 5-0)
+  for (let c = 5; c >= 0; c--) track.push({r:8,c});            // 45-50 (yellow segment)
+  // Going up (col 0, row 7-7) — actually back to start area
+  track.push({r:7,c:0});                                        // 51
+  return track;
+}
+
+function buildHomeStretchMap() {
+  return {
+    red:    [{r:7,c:1},{r:7,c:2},{r:7,c:3},{r:7,c:4},{r:7,c:5},{r:7,c:6}],
+    blue:   [{r:1,c:7},{r:2,c:7},{r:3,c:7},{r:4,c:7},{r:5,c:7},{r:6,c:7}],
+    green:  [{r:7,c:13},{r:7,c:12},{r:7,c:11},{r:7,c:10},{r:7,c:9},{r:7,c:8}],
+    yellow: [{r:13,c:7},{r:12,c:7},{r:11,c:7},{r:10,c:7},{r:9,c:7},{r:8,c:7}],
+  };
+}
+
+const TRACK_MAP = buildTrackMap();
+const STRETCH_MAP = buildHomeStretchMap();
+
+function renderBoard() {
+  const canvas = document.getElementById('boardCanvas');
+  const ctx = canvas.getContext('2d');
+  const N = 15;
+  const S = canvas.width / N; // cell size
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = '#1a1928';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawGrid(ctx, N, S);
+  drawHomeBases(ctx, S);
+  drawTrack(ctx, N, S);
+  drawCenterArrows(ctx, S);
+  drawPieces(ctx, S);
+}
+
+function drawGrid(ctx, N, S) {
+  // Draw all cells with subtle lines
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const x = c * S, y = r * S;
+      ctx.fillStyle = '#1e1d2e';
+      ctx.fillRect(x+1, y+1, S-2, S-2);
+    }
+  }
+}
+
+function drawHomeBases(ctx, S) {
+  // Home bases: 6x6 quadrants
+  const bases = [
+    { color: 'red',    r: 0,  c: 0  },
+    { color: 'blue',   r: 0,  c: 9  },
+    { color: 'green',  r: 9,  c: 9  },
+    { color: 'yellow', r: 9,  c: 0  },
+  ];
+
+  bases.forEach(({color, r, c}) => {
+    const x = c * S, y = r * S;
+    const size = 6 * S;
+
+    // Base bg
+    ctx.fillStyle = COLOR_HEX[color] + '22';
+    ctx.beginPath();
+    roundRect(ctx, x+2, y+2, size-4, size-4, 16);
+    ctx.fill();
+
+    ctx.strokeStyle = COLOR_HEX[color] + '66';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    roundRect(ctx, x+2, y+2, size-4, size-4, 16);
+    ctx.stroke();
+
+    // Inner circle
+    const cx = x + size/2, cy = y + size/2;
+    ctx.fillStyle = COLOR_HEX[color] + '33';
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.35, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = COLOR_HEX[color] + '55';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Home piece spots (4 circles)
+    const pieceR = S * 0.32;
+    const offsets = [[-1,-1],[1,-1],[-1,1],[1,1]];
+    offsets.forEach(([dr, dc], i) => {
+      const px = cx + dc * S * 0.9, py = cy + dr * S * 0.9;
+      ctx.fillStyle = '#0f0e17';
+      ctx.beginPath();
+      ctx.arc(px, py, pieceR, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = COLOR_HEX[color] + '88';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  });
+}
+
+function drawTrack(ctx, N, S) {
+  const SAFE = [0,8,13,21,26,34,39,47];
+  const COLOR_SEGMENTS = {
+    red: [0,1,2,3,4,5], blue: [13,14,15,16,17,18],
+    green: [26,27,28,29,30,31], yellow: [39,40,41,42,43,44]
+  };
+
+  // Draw main track cells
+  TRACK_MAP.forEach((pos, i) => {
+    const {r, c} = pos;
+    const x = c * S + 2, y = r * S + 2, w = S - 4, h = S - 4;
+
+    let fill = '#242336';
+    for (const [color, indices] of Object.entries(COLOR_SEGMENTS)) {
+      if (indices.includes(i)) { fill = COLOR_HEX[color] + 'aa'; break; }
+    }
+    if (SAFE.includes(i)) fill = '#ffffff33';
+
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    roundRect(ctx, x, y, w, h, 4);
+    ctx.fill();
+
+    if (SAFE.includes(i)) {
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = `bold ${S*0.45}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', c * S + S/2, r * S + S/2);
+    }
+  });
+
+  // Draw home stretches
+  Object.entries(STRETCH_MAP).forEach(([color, cells]) => {
+    cells.forEach((pos, i) => {
+      const {r, c} = pos;
+      const x = c * S + 2, y = r * S + 2, w = S - 4, h = S - 4;
+      const alpha = 0.3 + i * 0.12;
+      ctx.fillStyle = COLOR_HEX[color] + Math.round(alpha * 255).toString(16).padStart(2,'0');
+      ctx.beginPath();
+      roundRect(ctx, x, y, w, h, 4);
+      ctx.fill();
+    });
+  });
+}
+
+function drawCenterArrows(ctx, S) {
+  // Center finish area (triangle pointing to center)
+  const cx = 7.5 * S, cy = 7.5 * S;
+  const arrows = [
+    { color: 'red',    points: [[1,7.5],[6,5],[6,10]] },
+    { color: 'blue',   points: [[7.5,1],[10,6],[5,6]] },
+    { color: 'green',  points: [[14,7.5],[9,10],[9,5]] },
+    { color: 'yellow', points: [[7.5,14],[5,9],[10,9]] },
+  ];
+
+  arrows.forEach(({color, points}) => {
+    ctx.beginPath();
+    ctx.moveTo(points[0][0]*S, points[0][1]*S);
+    ctx.lineTo(points[1][0]*S, points[1][1]*S);
+    ctx.lineTo(points[2][0]*S, points[2][1]*S);
+    ctx.closePath();
+    ctx.fillStyle = COLOR_HEX[color] + '44';
+    ctx.fill();
+  });
+
+  // Center star
+  ctx.fillStyle = '#ffffff22';
+  ctx.beginPath();
+  ctx.arc(cx, cy, S*1.1, 0, Math.PI*2);
+  ctx.fill();
+  drawStar(ctx, cx, cy, 6, S*0.9, S*0.4, 'rgba(255,255,255,0.3)');
+}
+
+function drawStar(ctx, cx, cy, points, outer, inner, fill) {
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outer : inner;
+    const angle = (i * Math.PI / points) - Math.PI/2;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+
+function drawPieces(ctx, S) {
+  if (!gameState) return;
+  
+  // Collect all pieces by cell to handle stacking
+  const cellPieces = {};
+  
+  COLORS_LIST.forEach(color => {
+    if (!gameState.pieces[color]) return;
+    const player = gameState.players.find(p => p.color === color);
+    if (!player) return;
+
+    gameState.pieces[color].forEach((piece, i) => {
+      if (piece.finished) return;
+
+      let pos;
+      if (piece.trackPos === -1) {
+        // Home base
+        pos = getHomePiecePos(color, i, S);
+        if (!cellPieces[`home_${color}_${i}`]) cellPieces[`home_${color}_${i}`] = [];
+        cellPieces[`home_${color}_${i}`].push({piece, pos, isMovable: false});
+      } else if (piece.homeStretchPos >= 0) {
+        const cell = STRETCH_MAP[color][piece.homeStretchPos];
+        if (!cell) return;
+        const key = `${cell.r}_${cell.c}`;
+        if (!cellPieces[key]) cellPieces[key] = [];
+        const cx = cell.c * S + S/2, cy = cell.r * S + S/2;
+        cellPieces[key].push({piece, pos: {x: cx, y: cy}, isMovable: false});
+      } else {
+        // On main track
+        const trackIdx = (START_CELLS_JS[color] + piece.trackPos) % 52;
+        const cell = TRACK_MAP[trackIdx];
+        if (!cell) return;
+        const key = `${cell.r}_${cell.c}`;
+        if (!cellPieces[key]) cellPieces[key] = [];
+        const cx = cell.c * S + S/2, cy = cell.r * S + S/2;
+        const isMovable = gameState.currentTurn === color && 
+                          gameState.movablePieces.includes(piece.id) &&
+                          color === myColor;
+        cellPieces[key].push({piece, pos: {x: cx, y: cy}, isMovable});
+      }
+    });
+  });
+
+  // Draw all pieces
+  Object.values(cellPieces).forEach(pieces => {
+    const n = pieces.length;
+    pieces.forEach(({piece, pos, isMovable}, idx) => {
+      let x = pos.x, y = pos.y;
+      if (n > 1) {
+        const angle = (idx / n) * Math.PI * 2 - Math.PI/2;
+        x += Math.cos(angle) * S * 0.2;
+        y += Math.sin(angle) * S * 0.2;
+      }
+      drawPiece(ctx, piece, x, y, S * 0.36, isMovable, piece.id === selectedPiece);
+    });
+  });
+}
+
+const START_CELLS_JS = { red: 0, blue: 13, green: 26, yellow: 39 };
+
+function getHomePiecePos(color, index, S) {
+  const bases = { red:[0,0], blue:[0,9], green:[9,9], yellow:[9,0] };
+  const [br, bc] = bases[color];
+  const cx = (bc + 3) * S, cy = (br + 3) * S;
+  const offsets = [[-1,-1],[1,-1],[-1,1],[1,1]];
+  const [dr, dc] = offsets[index];
+  return { x: cx + dc * S * 0.9, y: cy + dr * S * 0.9 };
+}
+
+function drawPiece(ctx, piece, x, y, r, isMovable, isSelected) {
+  const color = piece.color;
+
+  // Glow for movable
+  if (isMovable || isSelected) {
+    ctx.shadowColor = isSelected ? '#ffffff' : COLOR_HEX[color];
+    ctx.shadowBlur = isSelected ? 20 : 14;
+  }
+
+  // Outer circle
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  const grad = ctx.createRadialGradient(x - r*0.25, y - r*0.25, r*0.05, x, y, r);
+  grad.addColorStop(0, COLOR_LIGHT[color]);
+  grad.addColorStop(1, COLOR_HEX[color]);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = isMovable ? '#fff' : 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = isMovable ? 2.5 : 1.5;
+  ctx.stroke();
+
+  // Inner dot
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.38, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fill();
+
+  // Pulse ring for movable
+  if (isMovable) {
+    const t = (Date.now() / 600) % 1;
+    ctx.beginPath();
+    ctx.arc(x, y, r + 4 + t * 5, 0, Math.PI*2);
+    ctx.strokeStyle = COLOR_HEX[color] + Math.round((1-t)*180).toString(16).padStart(2,'0');
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+}
+
+// ── Canvas Interaction ───────────────────────────────────────────────────────
+document.getElementById('boardCanvas').addEventListener('click', (e) => {
+  if (!gameState || gameState.phase !== 'playing') return;
+  if (gameState.currentTurn !== myColor) return;
+  if (!gameState.diceRolled) return;
+  if (gameState.movablePieces.length === 0) return;
+
+  const canvas = document.getElementById('boardCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+  const S = canvas.width / 15;
+
+  // Find clicked piece
+  let clicked = null;
+  gameState.movablePieces.forEach(pieceId => {
+    const piece = gameState.pieces[myColor].find(p => p.id === pieceId);
+    if (!piece) return;
+    let px, py;
+
+    if (piece.trackPos === -1) {
+      const pos = getHomePiecePos(myColor, piece.id, S);
+      px = pos.x; py = pos.y;
+    } else if (piece.homeStretchPos >= 0) {
+      const cell = STRETCH_MAP[myColor][piece.homeStretchPos];
+      if (!cell) return;
+      px = cell.c * S + S/2; py = cell.r * S + S/2;
+    } else {
+      const trackIdx = (START_CELLS_JS[myColor] + piece.trackPos) % 52;
+      const cell = TRACK_MAP[trackIdx];
+      if (!cell) return;
+      px = cell.c * S + S/2; py = cell.r * S + S/2;
+    }
+
+    const dist = Math.hypot(mx - px, my - py);
+    if (dist < S * 0.45) clicked = pieceId;
+  });
+
+  if (clicked !== null) {
+    ws.send(JSON.stringify({ type: 'move', pieceId: clicked }));
+  }
+});
+
+// Animation loop
+function animate() {
+  if (gameState?.phase === 'playing' && gameState?.movablePieces?.length > 0) {
+    renderBoard();
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ── Winner ───────────────────────────────────────────────────────────────────
+function showWinner() {
+  const overlay = document.getElementById('winnerOverlay');
+  const color = gameState.winner;
+  const player = gameState.players.find(p => p.color === color);
+  const emojis = {red:'🔴',blue:'🔵',green:'🟢',yellow:'🟡'};
+
+  document.getElementById('winnerEmoji').textContent = emojis[color] || '🏆';
+  document.getElementById('winnerTitle').textContent = `${player?.name || color} ha vinto!`;
+  document.getElementById('winnerSub').style.color = COLOR_HEX[color];
+  document.getElementById('winnerSub').textContent = color === myColor ? 'Complimenti! 🎉' : 'Bella partita!';
+  overlay.classList.add('show');
+}
+
+function restartGame() {
+  ws?.send(JSON.stringify({ type: 'restart' }));
+  document.getElementById('winnerOverlay').classList.remove('show');
+}
+function resetAll() {
+  ws?.send(JSON.stringify({ type: 'reset' }));
+  document.getElementById('winnerOverlay').classList.remove('show');
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function isPlayerFinished(color) {
+  return gameState?.pieces[color]?.every(p => p.finished) || false;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+}
+
+// Pre-fill server address
+window.addEventListener('load', () => {
+  const host = location.hostname || 'localhost';
+  document.getElementById('serverInput').value = `${host}:3000`;
+  document.getElementById('nameInput').focus();
+});
+</script>
+</body>
+</html>
