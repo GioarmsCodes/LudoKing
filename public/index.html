@@ -458,8 +458,19 @@ function connect() {
   const name = document.getElementById('nameInput').value.trim() || 'Giocatore';
   const server = document.getElementById('serverInput').value.trim();
   if (!server) { showJoinError('Inserisci l\'IP del server'); return; }
-  
-  const wsUrl = server.startsWith('ws') ? server : `ws://${server}`;
+
+  let wsUrl;
+  if (server.startsWith('ws')) {
+    wsUrl = server;
+  } else {
+    // Auto-detect: se il dominio non ha porta esplicita o è un hostname .com/.net/ecc → usa wss (cloud)
+    // Se è un IP locale (192.168.x.x, localhost, 10.x.x.x) → usa ws
+    const isLocal = /^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(server);
+    const proto = isLocal ? 'ws' : 'wss';
+    // Rimuovi la porta :3000 se presente per servizi cloud (Render usa porta 443)
+    const cleanServer = !isLocal ? server.replace(/:3000$/, '') : server;
+    wsUrl = `${proto}://${cleanServer}`;
+  }
   
   try {
     ws = new WebSocket(wsUrl);
@@ -1105,7 +1116,8 @@ function roundRect(ctx, x, y, w, h, r) {
 // Pre-fill server address
 window.addEventListener('load', () => {
   const host = location.hostname || 'localhost';
-  document.getElementById('serverInput').value = `${host}:3000`;
+  const isLocal = /^(localhost|127\.|192\.168\.|10\.)/.test(host);
+  document.getElementById('serverInput').value = isLocal ? `${host}:3000` : host;
   document.getElementById('nameInput').focus();
 });
 </script>
